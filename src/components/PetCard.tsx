@@ -1,8 +1,10 @@
 import Image from "next/image";
+import Link from "next/link";
 import { Cat, Dog, MapPin, MessageCircle } from "lucide-react";
 import type { PetReport } from "@/lib/types";
 import { formatRelativeDate } from "@/lib/format";
 import { buildWhatsAppUrl, whatsappButtonLabel } from "@/lib/whatsapp";
+import { isDemoReport } from "@/lib/demos";
 
 type Props = {
   report: PetReport;
@@ -10,6 +12,7 @@ type Props = {
 
 export function PetCard({ report }: Props) {
   const isLost = report.report_type === "perdido";
+  const isDemo = isDemoReport(report.description);
   const PetIcon = report.pet_type === "perro" ? Dog : Cat;
   const wa = buildWhatsAppUrl(report);
 
@@ -45,6 +48,11 @@ export function PetCard({ report }: Props) {
             <PetIcon className="h-3.5 w-3.5" aria-hidden />
             {report.pet_type}
           </span>
+          {isDemo ? (
+            <span className="rounded-xl bg-amber-500 px-2.5 py-1 text-xs font-bold uppercase tracking-wide text-white">
+              Ejemplo
+            </span>
+          ) : null}
         </div>
       </div>
 
@@ -52,9 +60,7 @@ export function PetCard({ report }: Props) {
         <div className="flex items-start gap-2 text-sm text-foreground">
           <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-primary" aria-hidden />
           <div>
-            <p className="font-semibold leading-snug">
-              {report.neighborhood}
-            </p>
+            <p className="font-semibold leading-snug">{report.neighborhood}</p>
             <p className="text-muted">{report.city}</p>
           </div>
         </div>
@@ -69,15 +75,24 @@ export function PetCard({ report }: Props) {
           {formatRelativeDate(report.created_at)}
         </p>
 
-        <a
-          href={wa}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="tap-target flex w-full items-center justify-center gap-2 rounded-2xl bg-[#25D366] px-4 py-3.5 text-sm font-bold text-white transition hover:bg-[#1ebe57] active:scale-[0.99]"
-        >
-          <MessageCircle className="h-5 w-5" aria-hidden />
-          {whatsappButtonLabel(report.report_type)}
-        </a>
+        {isDemo ? (
+          <Link
+            href="/publicar"
+            className="tap-target flex w-full items-center justify-center gap-2 rounded-2xl bg-primary px-4 py-3.5 text-sm font-bold text-white transition hover:bg-primary-dark active:scale-[0.99]"
+          >
+            Publicar el mío de verdad
+          </Link>
+        ) : (
+          <a
+            href={wa}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="tap-target flex w-full items-center justify-center gap-2 rounded-2xl bg-[#25D366] px-4 py-3.5 text-sm font-bold text-white transition hover:bg-[#1ebe57] active:scale-[0.99]"
+          >
+            <MessageCircle className="h-5 w-5" aria-hidden />
+            {whatsappButtonLabel(report.report_type)}
+          </a>
+        )}
       </div>
     </article>
   );
