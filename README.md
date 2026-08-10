@@ -1,36 +1,113 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Ubica tu Peludo
 
-## Getting Started
+Plataforma de emergencia (mobile-first) para reunir mascotas en Colombia tras un sismo.  
+**Sin registro ni login.** Dos flujos: *perdido* y *encontrado/visto*, con contacto directo por WhatsApp.
 
-First, run the development server:
+Stack: **Next.js 16 (App Router) + TypeScript + Tailwind CSS + Lucide + Supabase** (DB + fotos).  
+Sin Supabase configurado, corre en **modo local** (JSON + `/public/uploads`) para probar al instante.
+
+---
+
+## Probar en local (2 minutos)
 
 ```bash
+cd Ubicatupeludo
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Abre [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+1. Verás reportes de ejemplo en el feed.
+2. Usa pestañas **Todas / Perdidos / Encontrados** y filtros de ciudad/animal.
+3. Pulsa **Publicar** → elige tipo → completa el formulario → publica.
+4. En una tarjeta, abre el botón de WhatsApp (abre `wa.me` con mensaje listo).
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+> El banner “Modo local” indica que aún no hay Supabase. Los datos viven en `.data/reports.json`.
 
-## Learn More
+---
 
-To learn more about Next.js, take a look at the following resources:
+## Configurar Supabase (producción)
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+1. Crea un proyecto gratis en [supabase.com](https://supabase.com).
+2. En **SQL Editor**, pega y ejecuta todo el contenido de `supabase/schema.sql`.
+3. En **Project Settings → API**, copia:
+   - Project URL
+   - `anon` `public` key
+4. Crea `.env.local`:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```bash
+cp .env.example .env.local
+```
 
-## Deploy on Vercel
+```env
+NEXT_PUBLIC_SUPABASE_URL=https://XXXX.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOi...
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+5. Reinicia `npm run dev`.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+El schema crea:
+- Tabla `pet_reports` con RLS de lectura/escritura pública (sin auth, a propósito).
+- Bucket `pet-photos` público para las fotos.
+
+---
+
+## Desplegar en Vercel (gratis)
+
+1. Sube el repo a GitHub.
+2. En [vercel.com](https://vercel.com) → **Add New Project** → importa el repo.
+3. En **Environment Variables** agrega las mismas que en `.env.local`:
+   - `NEXT_PUBLIC_SUPABASE_URL`
+   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+4. Deploy. Listo.
+
+En producción **necesitas Supabase**: el filesystem de Vercel no persiste el modo local.
+
+Comando útil desde CLI:
+
+```bash
+npx vercel
+```
+
+---
+
+## Estructura
+
+```
+src/
+  app/
+    page.tsx              # Feed + filtros
+    publicar/page.tsx     # Formulario
+    actions/reports.ts    # Server Action (publicar + subir foto)
+  components/             # UI (hero, cards, filtros, form)
+  lib/
+    reports.ts            # Capa de datos (Supabase o local)
+    cities.ts             # Ciudades de Colombia
+    whatsapp.ts           # Links y mensajes wa.me
+supabase/schema.sql       # SQL listo para pegar
+```
+
+---
+
+## Flujos cubiertos
+
+| Requisito | Implementación |
+|-----------|----------------|
+| Sin auth | Publicar y buscar sin cuenta |
+| Selector perdido / encontrado | Primer paso del formulario |
+| Perro / Gato, foto, ciudad, barrio, +57, descripción | Formulario único |
+| Pestañas + filtros | URL search params |
+| Cards con badge, foto, ubicación, fecha | `PetCard` |
+| WhatsApp contextual | Textos distintos según tipo de reporte |
+
+---
+
+## Scripts
+
+```bash
+npm run dev      # desarrollo
+npm run build    # build de producción
+npm run start    # servir build
+npm run lint     # eslint
+```

@@ -1,26 +1,90 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #f3f7f4;
+  --foreground: #1a2e28;
+  --muted: #5a736a;
+  --card: #ffffff;
+  --primary: #0f766e;
+  --primary-dark: #0b5f59;
+  --lost: #c2410c;
+  --lost-soft: #fff1e8;
+  --found: #047857;
+  --found-soft: #e8f8f1;
+  --line: #d5e3dc;
+  --accent: #f59e0b;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-muted: var(--muted);
+  --color-card: var(--card);
+  --color-primary: var(--primary);
+  --color-primary-dark: var(--primary-dark);
+  --color-lost: var(--lost);
+  --color-lost-soft: var(--lost-soft);
+  --color-found: var(--found);
+  --color-found-soft: var(--found-soft);
+  --color-line: var(--line);
+  --color-accent: var(--accent);
+  --font-sans: var(--font-body);
+  --font-display: var(--font-display);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 body {
-  background: var(--background);
+  margin: 0;
+  min-height: 100%;
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-body), system-ui, sans-serif;
+  background:
+    radial-gradient(1200px 500px at 10% -10%, #d9f2ea 0%, transparent 55%),
+    radial-gradient(900px 420px at 100% 0%, #ffe8d4 0%, transparent 50%),
+    linear-gradient(180deg, #f7fbf8 0%, #eef5f1 45%, #f3f7f4 100%);
+  background-attachment: fixed;
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes soft-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.03);
+  }
+}
+
+.animate-fade-up {
+  animation: fade-up 0.55s ease-out both;
+}
+
+.animate-fade-up-delay {
+  animation: fade-up 0.65s ease-out 0.1s both;
+}
+
+.animate-soft-pulse {
+  animation: soft-pulse 2.8s ease-in-out infinite;
+}
+
+.tap-target {
+  min-height: 48px;
 }
