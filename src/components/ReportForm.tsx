@@ -158,7 +158,9 @@ export function ReportForm() {
                 <span className="text-sm font-semibold text-foreground">
                   Tomar o subir foto
                 </span>
-                <span className="text-xs text-muted">Opcional · máx. 5 MB</span>
+                <span className="text-xs text-muted">
+                  Recomendada · JPG/PNG/WEBP · máx. 4 MB
+                </span>
               </>
             )}
           </button>
@@ -166,8 +168,7 @@ export function ReportForm() {
             ref={fileRef}
             type="file"
             name="photo"
-            accept="image/*"
-            capture="environment"
+            accept="image/jpeg,image/png,image/webp,image/heic,image/heif,image/*"
             className="sr-only"
             onChange={(e) => onPhotoChange(e.target.files?.[0])}
           />

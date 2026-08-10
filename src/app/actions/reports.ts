@@ -25,21 +25,43 @@ function isValidPetType(v: FormDataEntryValue | null): v is PetType {
   return v === "perro" || v === "gato";
 }
 
+function looksLikeImage(file: File): boolean {
+  if (file.type.startsWith("image/")) return true;
+  // iPhone a veces manda type vacío con HEIC/JPEG
+  const ext = file.name.split(".").pop()?.toLowerCase() || "";
+  return ["jpg", "jpeg", "png", "webp", "heic", "heif", "gif"].includes(ext);
+}
+
 async function uploadPhoto(file: File): Promise<string | null> {
   if (!file || file.size === 0) return null;
-  if (!file.type.startsWith("image/")) {
-    throw new Error("El archivo debe ser una imagen.");
+  if (!looksLikeImage(file)) {
+    throw new Error("El archivo debe ser una imagen (JPG, PNG o WEBP).");
   }
-  if (file.size > 5 * 1024 * 1024) {
-    throw new Error("La imagen no puede superar 5 MB.");
+  // Vercel limita el body ~4.5 MB; dejamos margen
+  if (file.size > 4 * 1024 * 1024) {
+    throw new Error(
+      "La imagen es muy pesada (máx. 4 MB). Comprímela o toma otra foto.",
+    );
   }
 
   const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
-  const safeExt = ["jpg", "jpeg", "png", "webp", "heic", "gif"].includes(ext)
-    ? ext
+  const safeExt = ["jpg", "jpeg", "png", "webp", "heic", "heif", "gif"].includes(
+    ext,
+  )
+    ? ext === "jpeg"
+      ? "jpg"
+      : ext
     : "jpg";
   const filename = `${randomUUID()}.${safeExt}`;
   const bytes = Buffer.from(await file.arrayBuffer());
+  const contentType =
+    file.type && file.type.startsWith("image/")
+      ? file.type
+      : safeExt === "png"
+        ? "image/png"
+        : safeExt === "webp"
+          ? "image/webp"
+          : "image/jpeg";
 
   if (isSupabaseConfigured()) {
     const supabase = createServerClient();
@@ -48,7 +70,7 @@ async function uploadPhoto(file: File): Promise<string | null> {
     const { error } = await supabase.storage
       .from("pet-photos")
       .upload(filename, bytes, {
-        contentType: file.type || "image/jpeg",
+        contentType,
         upsert: false,
       });
 
