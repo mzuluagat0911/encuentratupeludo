@@ -4,7 +4,6 @@ import { isSupabaseConfigured } from "@/lib/supabase/client";
 
 export const dynamic = "force-dynamic";
 
-/** PNG 1x1 transparente mínimo para probar upload. */
 const TINY_PNG = Buffer.from(
   "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
   "base64",
@@ -30,10 +29,17 @@ export async function GET() {
     );
   }
 
-  const table = await supabase.from("pet_reports").select("id").limit(1);
+  const tableRead = await supabase
+    .from("pet_reports")
+    .select("id")
+    .neq("neighborhood", "__health_probe__")
+    .limit(5);
 
-  // getBucket() falla con anon/publishable aunque el bucket exista.
-  // Probamos list + upload como lo hace la app real.
+  const countRes = await supabase
+    .from("pet_reports")
+    .select("id", { count: "exact", head: true })
+    .neq("neighborhood", "__health_probe__");
+
   const list = await supabase.storage.from("pet-photos").list("", { limit: 1 });
 
   const probeName = `__health_${Date.now()}.png`;
@@ -44,25 +50,43 @@ export async function GET() {
       upsert: true,
     });
 
-  let uploadOk = !upload.error;
-  let uploadDetail = upload.error?.message || "ok";
-
+  const uploadOk = !upload.error;
   if (uploadOk) {
     await supabase.storage.from("pet-photos").remove([probeName]);
   }
 
-  const tableOk = !table.error;
-  const listOk = !list.error;
-  const storageOk = listOk || uploadOk;
+  const insert = await supabase
+    .from("pet_reports")
+    .insert({
+      report_type: "encontrado",
+      pet_type: "perro",
+      photo_url: null,
+      city: "Bogotá",
+      neighborhood: "__health_probe__",
+      phone: "3000000000",
+      description: "Probe automático",
+    })
+    .select("id")
+    .single();
+
+  const insertOk = !insert.error && Boolean(insert.data?.id);
+  const insertDetail = insert.error?.message || "ok";
+
+  if (insert.data?.id) {
+    await supabase.from("pet_reports").delete().eq("id", insert.data.id);
+  }
+
+  const readOk = !tableRead.error;
 
   return NextResponse.json({
-    ok: tableOk && uploadOk,
+    ok: readOk && insertOk && uploadOk,
     mode: "supabase",
+    report_count: countRes.count ?? 0,
     checks: {
-      table_pet_reports: tableOk ? "ok" : table.error?.message || "error",
-      storage_list: listOk ? "ok" : list.error?.message || "error",
-      storage_upload: uploadOk ? "ok" : uploadDetail,
-      storage_ready: storageOk,
+      table_read: readOk ? "ok" : tableRead.error?.message || "error",
+      table_insert: insertOk ? "ok" : insertDetail,
+      storage_list: !list.error ? "ok" : list.error?.message || "error",
+      storage_upload: uploadOk ? "ok" : upload.error?.message || "error",
     },
   });
 }

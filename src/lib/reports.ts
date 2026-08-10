@@ -125,6 +125,7 @@ async function listSupabase(filters: ReportFilters): Promise<PetReport[]> {
   let query = supabase
     .from("pet_reports")
     .select("*")
+    .neq("neighborhood", "__health_probe__")
     .order("created_at", { ascending: false });
 
   if (filters.reportType && filters.reportType !== "todas") {

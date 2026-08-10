@@ -36,6 +36,12 @@ create policy "Creación pública de reportes"
   on public.pet_reports for insert
   with check (true);
 
+-- Opcional: permite limpiar probes de health / moderación manual
+drop policy if exists "Borrado público de reportes" on public.pet_reports;
+create policy "Borrado público de reportes"
+  on public.pet_reports for delete
+  using (true);
+
 -- 3. Bucket de fotos (público)
 insert into storage.buckets (id, name, public)
 values ('pet-photos', 'pet-photos', true)
