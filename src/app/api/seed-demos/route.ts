@@ -1,14 +1,11 @@
 import { NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/client";
-import { DEMO_MARKER, DEMO_REPORTS } from "@/lib/demos";
+import { DEMO_MARKER } from "@/lib/demos";
 
 export const dynamic = "force-dynamic";
 
-/**
- * Carga reportes de ejemplo si aún no existen.
- * Seguro de llamar varias veces (no duplica).
- */
+/** Elimina reportes de ejemplo para no confundir a usuarios reales. */
 export async function POST() {
   if (!isSupabaseConfigured()) {
     return NextResponse.json(
@@ -25,34 +22,10 @@ export async function POST() {
     );
   }
 
-  const existing = await supabase
-    .from("pet_reports")
-    .select("id")
-    .like("description", `${DEMO_MARKER}%`)
-    .limit(1);
-
-  if (existing.error) {
-    return NextResponse.json(
-      { ok: false, message: existing.error.message },
-      { status: 500 },
-    );
-  }
-
-  if ((existing.data?.length ?? 0) > 0) {
-    const count = await supabase
-      .from("pet_reports")
-      .select("id", { count: "exact", head: true });
-    return NextResponse.json({
-      ok: true,
-      seeded: false,
-      message: "Los ejemplos ya estaban cargados",
-      report_count: count.count ?? 0,
-    });
-  }
-
   const { data, error } = await supabase
     .from("pet_reports")
-    .insert(DEMO_REPORTS)
+    .delete()
+    .like("description", `${DEMO_MARKER}%`)
     .select("id");
 
   if (error) {
@@ -62,11 +35,14 @@ export async function POST() {
     );
   }
 
+  const count = await supabase
+    .from("pet_reports")
+    .select("id", { count: "exact", head: true });
+
   return NextResponse.json({
     ok: true,
-    seeded: true,
-    inserted: data?.length ?? 0,
-    report_count: data?.length ?? 0,
+    deleted: data?.length ?? 0,
+    report_count: count.count ?? 0,
   });
 }
 
