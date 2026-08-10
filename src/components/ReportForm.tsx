@@ -29,6 +29,7 @@ export function ReportForm() {
   const [reportType, setReportType] = useState<ReportType | null>(null);
   const [petType, setPetType] = useState<PetType>("perro");
   const [preview, setPreview] = useState<string | null>(null);
+  const [hasPhoto, setHasPhoto] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -43,10 +44,12 @@ export function ReportForm() {
   function onPhotoChange(file: File | undefined) {
     if (!file) {
       setPreview(null);
+      setHasPhoto(false);
       return;
     }
     const url = URL.createObjectURL(file);
     setPreview(url);
+    setHasPhoto(true);
   }
 
   if (state.ok) {
@@ -138,12 +141,16 @@ export function ReportForm() {
       <div className={`space-y-5 ${!reportType ? "pointer-events-none opacity-40" : ""}`}>
         <div>
           <label className="mb-2 block text-sm font-bold uppercase tracking-wide text-muted">
-            Foto
+            Foto <span className="text-lost">*</span>
           </label>
           <button
             type="button"
             onClick={() => fileRef.current?.click()}
-            className="tap-target flex w-full flex-col items-center justify-center gap-2 rounded-3xl border-2 border-dashed border-line bg-white px-4 py-8 text-center transition hover:border-primary/40"
+            className={`tap-target flex w-full flex-col items-center justify-center gap-2 rounded-3xl border-2 border-dashed bg-white px-4 py-8 text-center transition ${
+              hasPhoto
+                ? "border-found/50 hover:border-found"
+                : "border-line hover:border-primary/40"
+            }`}
           >
             {previewUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
@@ -159,7 +166,7 @@ export function ReportForm() {
                   Tomar o subir foto
                 </span>
                 <span className="text-xs text-muted">
-                  Recomendada · JPG/PNG/WEBP · máx. 4 MB
+                  Obligatoria · JPG/PNG/WEBP · máx. 4 MB
                 </span>
               </>
             )}
@@ -169,6 +176,7 @@ export function ReportForm() {
             type="file"
             name="photo"
             accept="image/jpeg,image/png,image/webp,image/heic,image/heif,image/*"
+            required
             className="sr-only"
             onChange={(e) => onPhotoChange(e.target.files?.[0])}
           />
@@ -256,7 +264,7 @@ export function ReportForm() {
 
       <button
         type="submit"
-        disabled={!reportType || pending}
+        disabled={!reportType || !hasPhoto || pending}
         className="tap-target flex w-full items-center justify-center gap-2 rounded-2xl bg-primary px-4 py-4 text-base font-bold text-white transition hover:bg-primary-dark disabled:cursor-not-allowed disabled:opacity-50"
       >
         {pending ? (

@@ -126,9 +126,19 @@ export async function publishReport(
       };
     }
 
-    let photoUrl: string | null = null;
-    if (photo instanceof File && photo.size > 0) {
-      photoUrl = await uploadPhoto(photo);
+    if (!(photo instanceof File) || photo.size === 0) {
+      return {
+        ok: false,
+        message: "La foto es obligatoria para publicar el reporte.",
+      };
+    }
+
+    const photoUrl = await uploadPhoto(photo);
+    if (!photoUrl) {
+      return {
+        ok: false,
+        message: "No pudimos guardar la foto. Intenta con otra imagen.",
+      };
     }
 
     const report = await createReport({
