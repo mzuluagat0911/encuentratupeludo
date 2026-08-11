@@ -8,7 +8,7 @@ import { EmptyState } from "@/components/EmptyState";
 import { LocalModeBanner } from "@/components/LocalModeBanner";
 import { PublishFab } from "@/components/PublishFab";
 import { listReports, usingLocalStore } from "@/lib/reports";
-import { countRescuedReports } from "@/lib/rescueOps";
+import { countFeedReports } from "@/lib/rescueOps";
 import type { PetType, ReportType } from "@/lib/types";
 
 function parseTipo(value?: string): ReportType | "todas" {
@@ -41,14 +41,18 @@ export default async function HomePage({ searchParams }: PageProps<"/">) {
     petType: animal,
     city: ciudad,
   });
-  const rescuedCount = await countRescuedReports();
+  const counts = await countFeedReports();
 
   return (
     <>
       <SiteHeader />
       <main className="flex-1 pb-24">
         <HomeHero />
-        <RescuedHopeBanner count={rescuedCount} />
+        <RescuedHopeBanner
+          rescued={counts.rescatado}
+          lost={counts.perdido}
+          seen={counts.encontrado}
+        />
         <section id="reportes" className="mx-auto max-w-3xl px-4 py-6">
           {usingLocalStore() ? <LocalModeBanner /> : null}
 

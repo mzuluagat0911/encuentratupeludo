@@ -33,7 +33,15 @@ export function rescueKeepScore(description: string | null | undefined): number 
   return score;
 }
 
-export async function countRescuedReports(): Promise<number> {
+export type FeedCounts = {
+  rescatado: number;
+  perdido: number;
+  encontrado: number;
+};
+
+async function countByType(
+  reportType: "rescatado" | "perdido" | "encontrado",
+): Promise<number> {
   if (!isSupabaseConfigured()) return 0;
   const supabase = createServerClient();
   if (!supabase) return 0;
@@ -41,15 +49,28 @@ export async function countRescuedReports(): Promise<number> {
   const { count, error } = await supabase
     .from("pet_reports")
     .select("id", { count: "exact", head: true })
-    .eq("report_type", "rescatado")
+    .eq("report_type", reportType)
     .neq("neighborhood", "__health_probe__")
     .not("description", "like", "Ejemplo:%");
 
   if (error) {
-    console.error("countRescuedReports:", error.message);
+    console.error(`countByType(${reportType}):`, error.message);
     return 0;
   }
   return count ?? 0;
+}
+
+export async function countFeedReports(): Promise<FeedCounts> {
+  const [rescatado, perdido, encontrado] = await Promise.all([
+    countByType("rescatado"),
+    countByType("perdido"),
+    countByType("encontrado"),
+  ]);
+  return { rescatado, perdido, encontrado };
+}
+
+export async function countRescuedReports(): Promise<number> {
+  return (await countFeedReports()).rescatado;
 }
 
 /**

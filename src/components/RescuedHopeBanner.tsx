@@ -2,15 +2,19 @@ import { HeartHandshake } from "lucide-react";
 import Link from "next/link";
 
 type Props = {
-  count: number;
+  rescued: number;
+  lost: number;
+  seen: number;
 };
 
-export function RescuedHopeBanner({ count }: Props) {
-  const n = Math.max(0, count);
+export function RescuedHopeBanner({ rescued, lost, seen }: Props) {
+  const n = Math.max(0, rescued);
+  const lostN = Math.max(0, lost);
+  const seenN = Math.max(0, seen);
 
   return (
     <section
-      aria-label="Animales rescatados"
+      aria-label="Resumen de reportes"
       className="relative overflow-hidden border-b border-rescued/20"
     >
       <div
@@ -38,9 +42,33 @@ export function RescuedHopeBanner({ count }: Props) {
           </p>
         </div>
 
+        <div className="mt-0.5 flex w-full max-w-sm items-stretch justify-center gap-2 sm:max-w-md sm:gap-3">
+          <Link
+            href="/?tipo=perdido"
+            className="min-w-0 flex-1 rounded-xl bg-white/70 px-2 py-2 shadow-sm ring-1 ring-lost/15 transition hover:bg-white active:scale-[0.99] sm:px-3"
+          >
+            <p className="font-[family-name:var(--font-display)] text-lg font-semibold leading-none text-lost sm:text-xl">
+              {lostN}
+            </p>
+            <p className="mt-0.5 truncate text-[10px] font-semibold uppercase tracking-wide text-lost/80 sm:text-[11px]">
+              Perdidos
+            </p>
+          </Link>
+          <Link
+            href="/?tipo=encontrado"
+            className="min-w-0 flex-1 rounded-xl bg-white/70 px-2 py-2 shadow-sm ring-1 ring-found/15 transition hover:bg-white active:scale-[0.99] sm:px-3"
+          >
+            <p className="font-[family-name:var(--font-display)] text-lg font-semibold leading-none text-found sm:text-xl">
+              {seenN}
+            </p>
+            <p className="mt-0.5 truncate text-[10px] font-semibold uppercase tracking-wide text-found/80 sm:text-[11px]">
+              Vistos
+            </p>
+          </Link>
+        </div>
+
         <p className="max-w-md text-xs leading-snug text-muted sm:text-sm sm:leading-relaxed">
-          Cada número es un reencuentro. Gracias a quienes publican, buscan y
-          no se rinden.
+          Cada reencuentro cuenta. Sigue buscando: alguien puede haberlo visto.
         </p>
 
         <Link
