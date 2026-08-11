@@ -7,6 +7,7 @@ import { isSupabaseConfigured } from "@/lib/supabase/client";
 import { normalizeColombianPhone } from "@/lib/whatsapp";
 import type { PetType, ReportType } from "@/lib/types";
 import { COLOMBIA_CITIES } from "@/lib/cities";
+import { checkPublishContent } from "@/lib/contentFilter";
 import { promises as fs } from "fs";
 import path from "path";
 import { randomUUID } from "crypto";
@@ -116,6 +117,14 @@ export async function publishReport(
         ok: false,
         message: "Indica el sector, barrio o lugar (mínimo 3 caracteres).",
       };
+    }
+
+    const contentCheck = checkPublishContent({
+      neighborhood,
+      description,
+    });
+    if (contentCheck.blocked) {
+      return { ok: false, message: contentCheck.reason };
     }
 
     const phone = normalizeColombianPhone(phoneRaw);
