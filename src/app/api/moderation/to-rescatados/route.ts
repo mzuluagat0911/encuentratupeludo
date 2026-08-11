@@ -82,25 +82,33 @@ export async function POST() {
     if (data?.length) moved.push(...(data as Row[]));
   }
 
-  // Perdidos con mismo barrio+ciudad que un rescatado
+  // Solo mueve perdidos con barrio EXACTO (normalizado) + mismo tipo,
+  // y solo si el rescatado tiene texto claro de reencuentro.
   const { data: rescued } = await supabase
     .from("pet_reports")
     .select("id, city, neighborhood, description, pet_type")
     .eq("report_type", "rescatado");
 
   const movedPerdidos: Row[] = [];
+  const rescuedKeys = new Set<string>();
+
   for (const r of rescued || []) {
-    const barrio = normalizeForFilter(r.neighborhood);
+    if (!looksLikeRescuedDescription(r.description)) continue;
+    const key = `${normalizeForFilter(r.city)}|${normalizeForFilter(r.neighborhood)}|${r.pet_type}`;
+    if (rescuedKeys.has(key)) continue;
+    rescuedKeys.add(key);
+
     const { data: perdidos } = await supabase
       .from("pet_reports")
       .select("id, report_type, city, neighborhood, description, pet_type")
       .eq("report_type", "perdido")
-      .eq("city", r.city);
+      .eq("city", r.city)
+      .eq("pet_type", r.pet_type);
 
-    const matches = ((perdidos || []) as Row[]).filter((p) => {
-      const pb = normalizeForFilter(p.neighborhood);
-      return pb === barrio || pb.includes(barrio) || barrio.includes(pb);
-    });
+    const barrio = normalizeForFilter(r.neighborhood);
+    const matches = ((perdidos || []) as Row[]).filter(
+      (p) => normalizeForFilter(p.neighborhood) === barrio,
+    );
 
     if (!matches.length) continue;
     const { data, error } = await supabase
@@ -117,6 +125,18 @@ export async function POST() {
     if (data?.length) movedPerdidos.push(...(data as Row[]));
   }
 
+  // Corrección puntual: no eran reencuentros (match laxo de "Álamos")
+  const falsePositiveIds = [
+    "a0cc2722-eca6-49c3-af2c-af83d6273ef5", // MANOLO
+    "094f28a8-7c5e-4a0e-992e-fd1526029fe1", // clínica / Alamos
+  ];
+  const { data: reverted } = await supabase
+    .from("pet_reports")
+    .update({ report_type: "perdido" })
+    .in("id", falsePositiveIds)
+    .eq("report_type", "rescatado")
+    .select("id, report_type, city, neighborhood, description, pet_type");
+
   const dedupe = await dedupeRescuedReports();
   revalidatePath("/");
 
@@ -129,6 +149,7 @@ export async function POST() {
     ok: dedupe.ok,
     moved,
     moved_from_perdidos: movedPerdidos,
+    reverted_false_positives: reverted || [],
     dedupe,
     rescatados_total: count ?? 0,
   });
