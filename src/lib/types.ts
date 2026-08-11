@@ -1,4 +1,4 @@
-export type ReportType = "perdido" | "encontrado";
+export type ReportType = "perdido" | "encontrado" | "rescatado";
 export type PetType = "perro" | "gato";
 
 export type PetReport = {

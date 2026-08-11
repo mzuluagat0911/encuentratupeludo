@@ -7,11 +7,12 @@ import { COLOMBIA_CITIES } from "@/lib/cities";
 const TABS: {
   value: string;
   label: string;
-  tone?: "lost" | "found";
+  tone?: "lost" | "found" | "rescued";
 }[] = [
   { value: "todas", label: "Todas" },
   { value: "perdido", label: "Perdidos", tone: "lost" },
   { value: "encontrado", label: "Encontrados / Vistos", tone: "found" },
+  { value: "rescatado", label: "Rescatados", tone: "rescued" },
 ];
 
 const PET_OPTIONS = [
@@ -73,7 +74,9 @@ export function FeedFilters() {
                     ? "bg-lost text-white"
                     : tab.tone === "found"
                       ? "bg-found text-white"
-                      : "bg-foreground text-white"
+                      : tab.tone === "rescued"
+                        ? "bg-rescued text-white"
+                        : "bg-foreground text-white"
                   : "border border-line bg-white/80 text-foreground hover:bg-white"
               }`}
             >

@@ -8,6 +8,7 @@ import { normalizeColombianPhone } from "@/lib/whatsapp";
 import type { PetType, ReportType } from "@/lib/types";
 import { COLOMBIA_CITIES } from "@/lib/cities";
 import { checkPublishContent } from "@/lib/contentFilter";
+import { looksLikeRescuedDescription } from "@/lib/rescued";
 import { promises as fs } from "fs";
 import path from "path";
 import { randomUUID } from "crypto";
@@ -18,7 +19,9 @@ export type PublishState = {
   reportId?: string;
 };
 
-function isValidReportType(v: FormDataEntryValue | null): v is ReportType {
+function isValidReportType(
+  v: FormDataEntryValue | null,
+): v is "perdido" | "encontrado" {
   return v === "perdido" || v === "encontrado";
 }
 
@@ -150,8 +153,12 @@ export async function publishReport(
       };
     }
 
+    const finalType: ReportType = looksLikeRescuedDescription(description)
+      ? "rescatado"
+      : reportType;
+
     const report = await createReport({
-      report_type: reportType,
+      report_type: finalType,
       pet_type: petType,
       photo_url: photoUrl,
       city,

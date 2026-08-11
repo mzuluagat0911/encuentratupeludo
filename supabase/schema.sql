@@ -4,7 +4,7 @@
 -- 1. Tabla de reportes
 create table if not exists public.pet_reports (
   id uuid primary key default gen_random_uuid(),
-  report_type text not null check (report_type in ('perdido', 'encontrado')),
+  report_type text not null check (report_type in ('perdido', 'encontrado', 'rescatado')),
   pet_type text not null check (pet_type in ('perro', 'gato')),
   photo_url text,
   city text not null,
@@ -41,6 +41,12 @@ drop policy if exists "Borrado público de reportes" on public.pet_reports;
 create policy "Borrado público de reportes"
   on public.pet_reports for delete
   using (true);
+
+drop policy if exists "Actualización pública de reportes" on public.pet_reports;
+create policy "Actualización pública de reportes"
+  on public.pet_reports for update
+  using (true)
+  with check (true);
 
 -- 3. Bucket de fotos (público)
 insert into storage.buckets (id, name, public)

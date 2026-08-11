@@ -11,6 +11,8 @@
   --lost-soft: #fff1e8;
   --found: #047857;
   --found-soft: #e8f8f1;
+  --rescued: #1d4ed8;
+  --rescued-soft: #eff6ff;
   --line: #d5e3dc;
   --accent: #f59e0b;
 }
@@ -26,6 +28,8 @@
   --color-lost-soft: var(--lost-soft);
   --color-found: var(--found);
   --color-found-soft: var(--found-soft);
+  --color-rescued: var(--rescued);
+  --color-rescued-soft: var(--rescued-soft);
   --color-line: var(--line);
   --color-accent: var(--accent);
   --font-sans: var(--font-body);

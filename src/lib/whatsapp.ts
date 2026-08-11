@@ -16,16 +16,22 @@ export function buildWhatsAppUrl(report: PetReport): string {
   const local = normalizeColombianPhone(report.phone);
   const full = `57${local}`;
 
-  const text =
-    report.report_type === "perdido"
-      ? `Hola, vi tu reporte en la app sobre tu mascota perdida en ${report.neighborhood}, ${report.city}. Creo que la vi/tengo información.`
-      : `Hola, vi que reportaste una mascota encontrada en ${report.neighborhood}, ${report.city}. Creo que es la mía.`;
+  let text: string;
+  if (report.report_type === "perdido") {
+    text = `Hola, vi tu reporte en la app sobre tu mascota perdida en ${report.neighborhood}, ${report.city}. Creo que la vi/tengo información.`;
+  } else if (report.report_type === "encontrado") {
+    text = `Hola, vi que reportaste una mascota encontrada en ${report.neighborhood}, ${report.city}. Creo que es la mía.`;
+  } else {
+    text = `Hola, vi tu reporte de mascota rescatada en ${report.neighborhood}, ${report.city}.`;
+  }
 
   return `https://wa.me/${full}?text=${encodeURIComponent(text)}`;
 }
 
-export function whatsappButtonLabel(reportType: PetReport["report_type"]): string {
-  return reportType === "perdido"
-    ? "¡Lo vi / Lo tengo! (WhatsApp)"
-    : "¡Es mi mascota! (WhatsApp)";
+export function whatsappButtonLabel(
+  reportType: PetReport["report_type"],
+): string {
+  if (reportType === "perdido") return "¡Lo vi / Lo tengo! (WhatsApp)";
+  if (reportType === "encontrado") return "¡Es mi mascota! (WhatsApp)";
+  return "Contactar (WhatsApp)";
 }

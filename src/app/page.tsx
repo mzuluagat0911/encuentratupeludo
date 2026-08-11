@@ -10,7 +10,9 @@ import { listReports, usingLocalStore } from "@/lib/reports";
 import type { PetType, ReportType } from "@/lib/types";
 
 function parseTipo(value?: string): ReportType | "todas" {
-  if (value === "perdido" || value === "encontrado") return value;
+  if (value === "perdido" || value === "encontrado" || value === "rescatado") {
+    return value;
+  }
   return "todas";
 }
 
