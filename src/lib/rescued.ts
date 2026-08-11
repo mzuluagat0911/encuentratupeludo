@@ -53,6 +53,12 @@ const RESCUED_PHRASES = [
   "ya tiene dueno",
   "ya tiene dueño",
   "ya tiene familia",
+  "acabamos de encontrar",
+  "acabo de encontrar",
+  "encontramos a",
+  "encontre a",
+  "encontré a",
+  "gracias acabamos",
 ];
 
 export function looksLikeRescuedDescription(
@@ -73,7 +79,9 @@ export function looksLikeRescuedDescription(
     /\bya\s+(lo|la|los|las)\s+encontr/.test(text) ||
     /\breuperad[oa]s?\b/.test(text) ||
     /\bya\s+volv/.test(text) ||
-    /\bentregad[oa]\b/.test(text)
+    /\bentregad[oa]\b/.test(text) ||
+    /\bacabamos\s+de\s+encontr/.test(text) ||
+    /\b(encontramos|encontre|encontre)\s+a\s+\w+/.test(text)
   ) {
     return true;
   }
