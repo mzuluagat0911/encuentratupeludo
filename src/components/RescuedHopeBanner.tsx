@@ -18,29 +18,34 @@ export function RescuedHopeBanner({ count }: Props) {
         aria-hidden
         style={{
           background:
-            "radial-gradient(900px 280px at 15% 0%, rgba(29,78,216,0.18), transparent 55%), radial-gradient(700px 240px at 90% 30%, rgba(245,158,11,0.16), transparent 50%), linear-gradient(135deg, #eff6ff 0%, #f0fdf4 55%, #fff7ed 100%)",
+            "radial-gradient(700px 180px at 12% 0%, rgba(29,78,216,0.16), transparent 55%), radial-gradient(520px 160px at 92% 40%, rgba(245,158,11,0.14), transparent 50%), linear-gradient(135deg, #eff6ff 0%, #f0fdf4 55%, #fff7ed 100%)",
         }}
       />
-      <div className="relative mx-auto flex max-w-3xl flex-col items-center gap-3 px-4 py-8 text-center sm:py-10">
-        <span className="inline-flex items-center gap-2 rounded-2xl bg-white/80 px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-rescued shadow-sm">
-          <HeartHandshake className="h-4 w-4" aria-hidden />
+      <div className="relative mx-auto flex max-w-3xl flex-col items-center gap-1.5 px-4 py-4 text-center sm:gap-2 sm:py-5">
+        <span className="inline-flex items-center gap-1.5 rounded-xl bg-white/80 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-rescued shadow-sm sm:text-xs">
+          <HeartHandshake className="h-3.5 w-3.5 shrink-0" aria-hidden />
           Hay esperanza
         </span>
-        <p className="font-[family-name:var(--font-display)] text-5xl font-semibold leading-none tracking-tight text-rescued sm:text-6xl">
-          {n}
-        </p>
-        <p className="max-w-md text-base font-semibold text-foreground sm:text-lg">
-          {n === 1
-            ? "animalito ya reunido con su familia"
-            : "animalitos ya reunidos con sus familias"}
-        </p>
-        <p className="max-w-lg text-sm leading-relaxed text-muted">
+
+        <div className="flex flex-col items-center gap-0.5 sm:gap-1">
+          <p className="font-[family-name:var(--font-display)] text-4xl font-semibold leading-none tracking-tight text-rescued sm:text-5xl">
+            {n}
+          </p>
+          <p className="max-w-[20rem] text-sm font-semibold leading-snug text-foreground sm:max-w-md sm:text-base">
+            {n === 1
+              ? "animalito ya reunido con su familia"
+              : "animalitos ya reunidos con sus familias"}
+          </p>
+        </div>
+
+        <p className="max-w-md text-xs leading-snug text-muted sm:text-sm sm:leading-relaxed">
           Cada número es un reencuentro. Gracias a quienes publican, buscan y
           no se rinden.
         </p>
+
         <Link
           href="/?tipo=rescatado"
-          className="tap-target mt-1 inline-flex items-center justify-center rounded-2xl bg-rescued px-5 py-3 text-sm font-bold text-white transition hover:bg-blue-800 active:scale-[0.98]"
+          className="tap-target mt-0.5 inline-flex min-h-11 items-center justify-center rounded-xl bg-rescued px-4 py-2.5 text-sm font-bold text-white transition hover:bg-blue-800 active:scale-[0.98] sm:rounded-2xl sm:px-5"
         >
           Ver historias de rescatados
         </Link>
