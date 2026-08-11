@@ -1,5 +1,3 @@
-"use server";
-
 import { createServerClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/client";
 import { looksLikeRescuedDescription } from "@/lib/rescued";
