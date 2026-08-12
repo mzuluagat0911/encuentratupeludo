@@ -67,6 +67,18 @@ export function looksLikeRescuedDescription(
   if (!description?.trim()) return false;
   const text = normalizeForFilter(description);
 
+  // Sigue buscando / rumores de rescate ajeno — no es reencuentro con la familia
+  if (
+    /\brecompensa\b/.test(text) ||
+    /\bindican\s+fue\s+rescatad/.test(text) ||
+    /\b(entregado|entregada)\s+a\s+(alguien|otra\s+persona|un\s+tercero)/.test(text) ||
+    /\bvalidar\s+si\s+es\b/.test(text) ||
+    /\bpersona\s+que\s+lo\s+tiene\b/.test(text) ||
+    /\bbusco\s+(info|informacion|a\s+quien)/.test(text)
+  ) {
+    return false;
+  }
+
   for (const phrase of RESCUED_PHRASES) {
     const needle = normalizeForFilter(phrase);
     if (needle && text.includes(needle)) return true;
@@ -77,9 +89,9 @@ export function looksLikeRescuedDescription(
     /\bya\s+aparec/.test(text) ||
     /\bcon\s+su(s)?\s+duen/.test(text) ||
     /\bya\s+(lo|la|los|las)\s+encontr/.test(text) ||
-    /\breuperad[oa]s?\b/.test(text) ||
+    /\brecuperad[oa]s?\b/.test(text) ||
     /\bya\s+volv/.test(text) ||
-    /\bentregad[oa]\b/.test(text) ||
+    /\b(entregad[oa]\s+(a\s+su(s)?\s+duen|en\s+casa)|ya\s+fue\s+entregad[oa])/.test(text) ||
     /\bacabamos\s+de\s+encontr/.test(text) ||
     /\b(encontramos|encontre|encontre)\s+a\s+\w+/.test(text)
   ) {
