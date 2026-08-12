@@ -33,9 +33,8 @@ export default function AyudaIndexPage() {
               Ayuda en tu ciudad
             </h1>
             <p className="mt-2 max-w-xl text-sm leading-relaxed text-muted sm:text-base">
-              Hogares de paso de confianza: atienden peluditos y reciben
-              donaciones. Empezamos con Royi Pets en Cali. Cada ciudad puede
-              tener el suyo.
+              Lugares de confianza: hogares de paso, veterinarias y puntos de
+              atención. Hoy hay ayuda en Cali y Manizales.
             </p>
           </div>
         </section>
