@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { ShareReportButton } from "@/components/ShareReportButton";
+import { DownloadOgImageButton } from "@/components/DownloadOgImageButton";
 import { getReportById } from "@/lib/reports";
 import {
   reportShareDescription,
@@ -173,6 +174,11 @@ export default async function ReportePage({ params }: PageParams) {
                 variant="primary"
                 label="Compartir este reporte"
               />
+              <DownloadOgImageButton reportId={report.id} />
+              <p className="text-center text-xs leading-relaxed text-muted">
+                En Meta Ads sube esa imagen en el creativo del anuncio. El
+                preview del enlace solo no basta para pautar.
+              </p>
 
               {isRescued ? (
                 <div className="tap-target flex w-full items-center justify-center gap-2 rounded-2xl bg-rescued-soft px-4 py-3.5 text-sm font-bold text-rescued">
