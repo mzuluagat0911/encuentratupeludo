@@ -11,6 +11,7 @@ type Body = {
   neighborhood?: string;
   descriptionContains?: string;
   note?: string;
+  report_type?: "rescatado" | "perdido" | "encontrado";
 };
 
 /**
@@ -45,10 +46,17 @@ export async function POST(request: Request) {
     );
   }
 
+  const targetType = body.report_type || "rescatado";
+
   let query = supabase
     .from("pet_reports")
-    .select("id, report_type, city, neighborhood, description, pet_type, created_at")
-    .neq("report_type", "rescatado");
+    .select("id, report_type, city, neighborhood, description, pet_type, created_at");
+
+  if (targetType !== "rescatado") {
+    query = query.neq("report_type", targetType);
+  } else {
+    query = query.neq("report_type", "rescatado");
+  }
 
   if (id) query = query.eq("id", id);
   if (city) query = query.eq("city", city);
@@ -74,7 +82,7 @@ export async function POST(request: Request) {
 
   const note = body.note?.trim();
   const updates = rows.map((r) => {
-    const patch: Record<string, string> = { report_type: "rescatado" };
+    const patch: Record<string, string> = { report_type: targetType };
     if (note && !r.description?.includes(note)) {
       const base = r.description?.trim() || "";
       patch.description = base ? `${base}\n${note}` : note;
