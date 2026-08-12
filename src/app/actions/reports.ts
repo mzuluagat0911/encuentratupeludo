@@ -18,12 +18,13 @@ export type PublishState = {
   ok: boolean;
   message?: string;
   reportId?: string;
+  reportType?: ReportType;
 };
 
 function isValidReportType(
   v: FormDataEntryValue | null,
-): v is "perdido" | "encontrado" {
-  return v === "perdido" || v === "encontrado";
+): v is ReportType {
+  return v === "perdido" || v === "encontrado" || v === "rescatado";
 }
 
 function isValidPetType(v: FormDataEntryValue | null): v is PetType {
@@ -164,9 +165,10 @@ export async function publishReport(
       };
     }
 
-    const finalType: ReportType = looksLikeRescuedDescription(description)
-      ? "rescatado"
-      : reportType;
+    const finalType: ReportType =
+      reportType === "rescatado" || looksLikeRescuedDescription(description)
+        ? "rescatado"
+        : reportType;
 
     const report = await createReport({
       report_type: finalType,
@@ -183,9 +185,13 @@ export async function publishReport(
     return {
       ok: true,
       reportId: report.id,
-      message: usingLocalStore()
-        ? "¡Publicado! (modo local — configura Supabase para producción)"
-        : "¡Reporte publicado!",
+      reportType: report.report_type,
+      message:
+        report.report_type === "rescatado"
+          ? "¡Gracias por compartir una historia de esperanza!"
+          : usingLocalStore()
+            ? "¡Publicado! (modo local — configura Supabase para producción)"
+            : "¡Reporte publicado!",
     };
   } catch (err) {
     const message =

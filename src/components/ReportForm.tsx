@@ -7,6 +7,7 @@ import {
   Cat,
   CheckCircle2,
   Dog,
+  HeartHandshake,
   Loader2,
   MapPinned,
   Phone,
@@ -17,6 +18,7 @@ import {
   publishReport,
   type PublishState,
 } from "@/app/actions/reports";
+import { PublishSuccess } from "@/components/PublishSuccess";
 import { smartCropPetPhoto } from "@/lib/smartCrop";
 import type { PetType, ReportType } from "@/lib/types";
 
@@ -38,13 +40,6 @@ export function ReportForm() {
   const previewRef = useRef<string | null>(null);
 
   useEffect(() => {
-    if (state.ok) {
-      const t = setTimeout(() => router.push("/"), 900);
-      return () => clearTimeout(t);
-    }
-  }, [state.ok, router]);
-
-  useEffect(() => {
     return () => {
       if (previewRef.current) URL.revokeObjectURL(previewRef.current);
     };
@@ -64,7 +59,6 @@ export function ReportForm() {
       return;
     }
 
-    // Vista previa inmediata mientras procesamos
     setPreviewUrl(URL.createObjectURL(file));
     setHasPhoto(false);
     setCropping(true);
@@ -97,6 +91,16 @@ export function ReportForm() {
     }
   }
 
+  if (state.ok && state.reportId && state.reportType) {
+    return (
+      <PublishSuccess
+        reportId={state.reportId}
+        reportType={state.reportType}
+        message={state.message}
+      />
+    );
+  }
+
   if (state.ok) {
     return (
       <div className="rounded-3xl border border-found/30 bg-found-soft px-6 py-12 text-center">
@@ -105,8 +109,15 @@ export function ReportForm() {
           ¡Publicado!
         </h2>
         <p className="mt-2 text-sm text-muted">
-          {state.message ?? "Te llevamos al feed de reportes…"}
+          {state.message ?? "Tu reporte ya está en el feed."}
         </p>
+        <button
+          type="button"
+          onClick={() => router.push("/")}
+          className="tap-target mt-5 inline-flex rounded-2xl bg-primary px-5 py-3 text-sm font-bold text-white"
+        >
+          Ir al feed
+        </button>
       </div>
     );
   }
@@ -148,6 +159,23 @@ export function ReportForm() {
             </span>
             <span className="mt-1 block text-sm text-muted">
               Tengo un animalito o lo vi en la calle
+            </span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setReportType("rescatado")}
+            className={`tap-target rounded-3xl border-2 px-4 py-4 text-left transition ${
+              reportType === "rescatado"
+                ? "border-rescued bg-rescued-soft"
+                : "border-line bg-white hover:border-rescued/40"
+            }`}
+          >
+            <span className="flex items-center gap-2 text-base font-bold text-rescued">
+              <HeartHandshake className="h-5 w-5" aria-hidden />
+              Ya se reunió / Rescatado
+            </span>
+            <span className="mt-1 block text-sm text-muted">
+              Apareció o ya está con su familia — comparte la esperanza
             </span>
           </button>
         </div>

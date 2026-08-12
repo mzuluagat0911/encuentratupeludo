@@ -240,6 +240,62 @@ export async function createReport(
   return createLocal(input);
 }
 
+export async function getReportById(id: string): Promise<PetReport | null> {
+  if (!id?.trim()) return null;
+
+  if (isSupabaseConfigured()) {
+    const supabase = createServerClient();
+    if (!supabase) return null;
+    const { data, error } = await supabase
+      .from("pet_reports")
+      .select("*")
+      .eq("id", id)
+      .maybeSingle();
+    if (error || !data) return null;
+    return hydrateReport(data as PetReport);
+  }
+
+  const reports = await ensureLocalStore();
+  const found = reports.find((r) => r.id === id);
+  return found ? hydrateReport(found) : null;
+}
+
+export async function markReportAsRescued(
+  id: string,
+): Promise<{ ok: boolean; report?: PetReport; message?: string }> {
+  const current = await getReportById(id);
+  if (!current) {
+    return { ok: false, message: "No encontramos ese reporte." };
+  }
+  if (current.report_type === "rescatado") {
+    return { ok: true, report: current, message: "Este reporte ya estaba como rescatado." };
+  }
+
+  if (isSupabaseConfigured()) {
+    const supabase = createServerClient();
+    if (!supabase) {
+      return { ok: false, message: "No se pudo conectar." };
+    }
+    const { data, error } = await supabase
+      .from("pet_reports")
+      .update({ report_type: "rescatado" })
+      .eq("id", id)
+      .select("*")
+      .single();
+    if (error || !data) {
+      return { ok: false, message: error?.message || "No pudimos actualizar." };
+    }
+    return { ok: true, report: hydrateReport(data as PetReport) };
+  }
+
+  const reports = await ensureLocalStore();
+  const idx = reports.findIndex((r) => r.id === id);
+  if (idx < 0) return { ok: false, message: "No encontramos ese reporte." };
+  reports[idx] = { ...reports[idx], report_type: "rescatado" };
+  await writeLocalStore(reports);
+  return { ok: true, report: hydrateReport(reports[idx]) };
+}
+
 export function usingLocalStore(): boolean {
   return !isSupabaseConfigured();
 }
