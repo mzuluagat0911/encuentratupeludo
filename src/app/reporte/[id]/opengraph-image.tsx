@@ -15,7 +15,7 @@ type Props = {
 
 async function toDataUrl(url: string): Promise<string | null> {
   try {
-    const res = await fetch(url, { cache: "force-cache" });
+    const res = await fetch(url, { cache: "no-store" });
     if (!res.ok) return null;
     const contentType = res.headers.get("content-type") || "image/jpeg";
     if (!contentType.startsWith("image/")) return null;

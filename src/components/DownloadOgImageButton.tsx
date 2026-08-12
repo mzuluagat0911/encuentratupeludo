@@ -9,7 +9,7 @@ type Props = {
 
 /** Imagen 1200×630 lista para subir como creativo en Meta Ads. */
 export function DownloadOgImageButton({ reportId, className = "" }: Props) {
-  const href = `/reporte/${reportId}/opengraph-image`;
+  const href = `/reporte/${reportId}/opengraph-image?v=${reportId.slice(0, 8)}`;
 
   return (
     <a

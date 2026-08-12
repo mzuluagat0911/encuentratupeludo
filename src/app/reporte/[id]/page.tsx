@@ -41,6 +41,9 @@ export async function generateMetadata({
   const title = reportShareTitle(report);
   const description = reportShareDescription(report);
   const url = reportAbsoluteUrl(report.id);
+  // Query único por reporte: Meta cachea fuerte y si no, reusa la foto del anuncio anterior
+  const bust = `${report.id.slice(0, 8)}-${Date.parse(report.created_at) || 0}`;
+  const ogImage = `${getSiteUrl()}/reporte/${report.id}/opengraph-image?v=${bust}`;
 
   return {
     title,
@@ -53,12 +56,20 @@ export async function generateMetadata({
       siteName: "Ubica tu Peludo",
       locale: "es_CO",
       type: "article",
-      // La imagen la genera opengraph-image.tsx (1200×630, sin recorte agresivo)
+      images: [
+        {
+          url: ogImage,
+          width: 1200,
+          height: 630,
+          alt: `${report.pet_type} ${reportTypeLabel(report.report_type).toLowerCase()} en ${report.city}`,
+        },
+      ],
     },
     twitter: {
       card: "summary_large_image",
       title,
       description,
+      images: [ogImage],
     },
   };
 }
