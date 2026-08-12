@@ -9,6 +9,8 @@ import { LocalModeBanner } from "@/components/LocalModeBanner";
 import { PublishFab } from "@/components/PublishFab";
 import { listReports, usingLocalStore } from "@/lib/reports";
 import { countFeedReports } from "@/lib/rescueOps";
+import { hubCityForFeedFilter } from "@/lib/hubs";
+import { CityHelpBanner } from "@/components/CityHelpBanner";
 import type { PetType, ReportType } from "@/lib/types";
 
 function parseTipo(value?: string): ReportType | "todas" {
@@ -45,6 +47,7 @@ export default async function HomePage({ searchParams }: PageProps<"/">) {
     responsible: responsable || undefined,
   });
   const counts = await countFeedReports();
+  const helpHub = hubCityForFeedFilter(ciudad);
 
   return (
     <>
@@ -56,6 +59,7 @@ export default async function HomePage({ searchParams }: PageProps<"/">) {
           lost={counts.perdido}
           seen={counts.encontrado}
         />
+        {helpHub ? <CityHelpBanner hub={helpHub} /> : null}
         <section id="reportes" className="mx-auto max-w-3xl px-4 py-6">
           {usingLocalStore() ? <LocalModeBanner /> : null}
 

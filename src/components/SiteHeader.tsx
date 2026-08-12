@@ -19,13 +19,21 @@ export function SiteHeader() {
           </span>
         </Link>
 
-        <Link
-          href="/publicar"
-          className="tap-target inline-flex items-center justify-center gap-1.5 rounded-2xl bg-primary px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-primary-dark active:scale-[0.98] sm:px-4"
-        >
-          <Plus className="h-4 w-4" aria-hidden />
-          <span>Publicar</span>
-        </Link>
+        <div className="flex shrink-0 items-center gap-2">
+          <Link
+            href="/ayuda"
+            className="tap-target inline-flex items-center justify-center rounded-2xl px-2.5 py-2.5 text-sm font-semibold text-foreground transition hover:bg-white/80 sm:px-3"
+          >
+            Ayuda
+          </Link>
+          <Link
+            href="/publicar"
+            className="tap-target inline-flex items-center justify-center gap-1.5 rounded-2xl bg-primary px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-primary-dark active:scale-[0.98] sm:px-4"
+          >
+            <Plus className="h-4 w-4" aria-hidden />
+            <span>Publicar</span>
+          </Link>
+        </div>
       </div>
     </header>
   );
