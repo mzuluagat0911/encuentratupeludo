@@ -20,7 +20,7 @@ import {
   reportTypeBadgeClass,
   reportTypeLabel,
 } from "@/lib/reportCopy";
-import { absoluteAssetUrl, getSiteUrl, reportAbsoluteUrl, reportPath } from "@/lib/site";
+import { getSiteUrl, reportAbsoluteUrl, reportPath } from "@/lib/site";
 import { formatRelativeDate } from "@/lib/format";
 import { buildWhatsAppUrl, whatsappButtonLabel } from "@/lib/whatsapp";
 
@@ -40,7 +40,6 @@ export async function generateMetadata({
   const title = reportShareTitle(report);
   const description = reportShareDescription(report);
   const url = reportAbsoluteUrl(report.id);
-  const image = absoluteAssetUrl(report.photo_url);
 
   return {
     title,
@@ -53,20 +52,12 @@ export async function generateMetadata({
       siteName: "Ubica tu Peludo",
       locale: "es_CO",
       type: "article",
-      images: image
-        ? [
-            {
-              url: image,
-              alt: `${report.pet_type} ${reportTypeLabel(report.report_type).toLowerCase()} en ${report.city}`,
-            },
-          ]
-        : undefined,
+      // La imagen la genera opengraph-image.tsx (1200×630, sin recorte agresivo)
     },
     twitter: {
       card: "summary_large_image",
       title,
       description,
-      images: image ? [image] : undefined,
     },
   };
 }
