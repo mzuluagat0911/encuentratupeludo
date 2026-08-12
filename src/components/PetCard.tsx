@@ -36,7 +36,7 @@ export function PetCard({ report }: Props) {
             src={report.photo_url}
             alt={`${report.pet_type} ${typeLabel(report.report_type).toLowerCase()} en ${report.city}`}
             fill
-            className="object-cover"
+            className="object-cover object-[center_20%]"
             sizes="(max-width: 768px) 100vw, 480px"
           />
         ) : (
