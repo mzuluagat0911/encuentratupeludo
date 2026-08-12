@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useMemo, useRef, useState } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   Camera,
@@ -17,6 +17,7 @@ import {
   publishReport,
   type PublishState,
 } from "@/app/actions/reports";
+import { smartCropPetPhoto } from "@/lib/smartCrop";
 import type { PetType, ReportType } from "@/lib/types";
 
 const initialState: PublishState = { ok: false };
@@ -31,7 +32,10 @@ export function ReportForm() {
   const [petType, setPetType] = useState<PetType>("perro");
   const [preview, setPreview] = useState<string | null>(null);
   const [hasPhoto, setHasPhoto] = useState(false);
+  const [cropping, setCropping] = useState(false);
+  const [cropNote, setCropNote] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+  const previewRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (state.ok) {
@@ -40,17 +44,57 @@ export function ReportForm() {
     }
   }, [state.ok, router]);
 
-  const previewUrl = useMemo(() => preview, [preview]);
+  useEffect(() => {
+    return () => {
+      if (previewRef.current) URL.revokeObjectURL(previewRef.current);
+    };
+  }, []);
 
-  function onPhotoChange(file: File | undefined) {
+  function setPreviewUrl(url: string | null) {
+    if (previewRef.current) URL.revokeObjectURL(previewRef.current);
+    previewRef.current = url;
+    setPreview(url);
+  }
+
+  async function onPhotoChange(file: File | undefined) {
     if (!file) {
-      setPreview(null);
+      setPreviewUrl(null);
       setHasPhoto(false);
+      setCropNote(null);
       return;
     }
-    const url = URL.createObjectURL(file);
-    setPreview(url);
-    setHasPhoto(true);
+
+    // Vista previa inmediata mientras procesamos
+    setPreviewUrl(URL.createObjectURL(file));
+    setHasPhoto(false);
+    setCropping(true);
+    setCropNote("Encuadrando la carita…");
+
+    try {
+      const result = await smartCropPetPhoto(file);
+      if (fileRef.current) {
+        const dt = new DataTransfer();
+        dt.items.add(result.file);
+        fileRef.current.files = dt.files;
+      }
+      setPreviewUrl(URL.createObjectURL(result.file));
+      setHasPhoto(true);
+      setCropNote(
+        result.detected
+          ? `Encuadre listo · detectamos un ${result.label}`
+          : "Encuadre listo · usamos el centro de la foto",
+      );
+    } catch {
+      if (fileRef.current) {
+        const dt = new DataTransfer();
+        dt.items.add(file);
+        fileRef.current.files = dt.files;
+      }
+      setHasPhoto(true);
+      setCropNote("No pudimos optimizar el encuadre; usamos tu foto original.");
+    } finally {
+      setCropping(false);
+    }
   }
 
   if (state.ok) {
@@ -147,19 +191,30 @@ export function ReportForm() {
           <button
             type="button"
             onClick={() => fileRef.current?.click()}
-            className={`tap-target flex w-full flex-col items-center justify-center gap-2 rounded-3xl border-2 border-dashed bg-white px-4 py-8 text-center transition ${
+            disabled={cropping}
+            className={`tap-target flex w-full flex-col items-center justify-center gap-2 rounded-3xl border-2 border-dashed bg-white px-4 py-8 text-center transition disabled:opacity-70 ${
               hasPhoto
                 ? "border-found/50 hover:border-found"
                 : "border-line hover:border-primary/40"
             }`}
           >
-            {previewUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={previewUrl}
-                alt="Vista previa"
-                className="h-44 w-full rounded-2xl object-cover"
-              />
+            {preview ? (
+              <div className="relative w-full">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={preview}
+                  alt="Vista previa"
+                  className="aspect-[4/3] h-auto w-full rounded-2xl object-cover"
+                />
+                {cropping ? (
+                  <div className="absolute inset-0 flex items-center justify-center rounded-2xl bg-black/40">
+                    <span className="inline-flex items-center gap-2 rounded-xl bg-white px-3 py-2 text-sm font-semibold text-foreground">
+                      <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                      Encuadrando…
+                    </span>
+                  </div>
+                ) : null}
+              </div>
             ) : (
               <>
                 <Camera className="h-8 w-8 text-primary" aria-hidden />
@@ -172,6 +227,14 @@ export function ReportForm() {
               </>
             )}
           </button>
+          {cropNote ? (
+            <p className="mt-2 text-xs font-medium text-muted">{cropNote}</p>
+          ) : (
+            <p className="mt-2 text-xs text-muted">
+              Encuadramos automáticamente la carita del peludo para que se vea
+              bien en el feed.
+            </p>
+          )}
           <input
             ref={fileRef}
             type="file"
@@ -284,13 +347,18 @@ export function ReportForm() {
 
       <button
         type="submit"
-        disabled={!reportType || !hasPhoto || pending}
+        disabled={!reportType || !hasPhoto || pending || cropping}
         className="tap-target flex w-full items-center justify-center gap-2 rounded-2xl bg-primary px-4 py-4 text-base font-bold text-white transition hover:bg-primary-dark disabled:cursor-not-allowed disabled:opacity-50"
       >
         {pending ? (
           <>
             <Loader2 className="h-5 w-5 animate-spin" aria-hidden />
             Publicando…
+          </>
+        ) : cropping ? (
+          <>
+            <Loader2 className="h-5 w-5 animate-spin" aria-hidden />
+            Preparando foto…
           </>
         ) : (
           "Publicar reporte"
