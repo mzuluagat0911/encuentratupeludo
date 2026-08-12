@@ -22,9 +22,11 @@ export function SiteHeader() {
         <div className="flex shrink-0 items-center gap-2">
           <Link
             href="/ayuda"
-            className="tap-target inline-flex items-center justify-center rounded-2xl px-2.5 py-2.5 text-sm font-semibold text-foreground transition hover:bg-white/80 sm:px-3"
+            className="tap-target inline-flex items-center justify-center gap-1.5 rounded-2xl border border-primary/25 bg-white px-2.5 py-2.5 text-sm font-semibold text-primary shadow-sm transition hover:bg-primary/5 sm:px-3"
           >
-            Ayuda
+            <HeartHandshake className="h-4 w-4 shrink-0" aria-hidden />
+            <span className="sm:hidden">Donar</span>
+            <span className="hidden sm:inline">Donar / hogares</span>
           </Link>
           <Link
             href="/publicar"

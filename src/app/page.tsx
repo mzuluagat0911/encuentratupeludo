@@ -54,12 +54,12 @@ export default async function HomePage({ searchParams }: PageProps<"/">) {
       <SiteHeader />
       <main className="flex-1 pb-24">
         <HomeHero />
+        {helpHub ? <CityHelpBanner hub={helpHub} /> : null}
         <RescuedHopeBanner
           rescued={counts.rescatado}
           lost={counts.perdido}
           seen={counts.encontrado}
         />
-        {helpHub ? <CityHelpBanner hub={helpHub} /> : null}
         <section id="reportes" className="mx-auto max-w-3xl px-4 py-6">
           {usingLocalStore() ? <LocalModeBanner /> : null}
 
