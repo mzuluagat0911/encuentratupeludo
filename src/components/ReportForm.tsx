@@ -1,6 +1,12 @@
 "use client";
 
-import { useActionState, useEffect, useRef, useState } from "react";
+import {
+  useActionState,
+  useEffect,
+  useRef,
+  useState,
+  useTransition,
+} from "react";
 import { useRouter } from "next/navigation";
 import {
   Camera,
@@ -15,12 +21,14 @@ import {
 } from "lucide-react";
 import { COLOMBIA_CITIES } from "@/lib/cities";
 import {
+  previewMatches,
   publishReport,
   type PublishState,
 } from "@/app/actions/reports";
 import { PublishSuccess } from "@/components/PublishSuccess";
+import { MatchReview } from "@/components/MatchReview";
 import { smartCropPetPhoto } from "@/lib/smartCrop";
-import type { PetType, ReportType } from "@/lib/types";
+import type { PetReport, PetType, ReportType } from "@/lib/types";
 
 const initialState: PublishState = { ok: false };
 
@@ -36,6 +44,12 @@ export function ReportForm() {
   const [hasPhoto, setHasPhoto] = useState(false);
   const [cropping, setCropping] = useState(false);
   const [cropNote, setCropNote] = useState<string | null>(null);
+  const [step, setStep] = useState<"form" | "matches">("form");
+  const [candidates, setCandidates] = useState<PetReport[]>([]);
+  const [matchError, setMatchError] = useState<string | null>(null);
+  const [checkingMatches, startCheckTransition] = useTransition();
+  const formRef = useRef<HTMLFormElement>(null);
+  const pendingPublishRef = useRef<FormData | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const previewRef = useRef<string | null>(null);
 
@@ -91,6 +105,51 @@ export function ReportForm() {
     }
   }
 
+  function submitPublish(fd?: FormData) {
+    const data = fd ?? pendingPublishRef.current;
+    if (!data) {
+      const form = formRef.current;
+      if (!form) return;
+      formAction(new FormData(form));
+      return;
+    }
+    formAction(data);
+  }
+
+  function onFormSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    if (!reportType || !hasPhoto || cropping || pending || checkingMatches) {
+      return;
+    }
+
+    const form = e.currentTarget;
+    const fd = new FormData(form);
+    pendingPublishRef.current = fd;
+    setMatchError(null);
+
+    // Rescatados: publicar directo, sin revisión de coincidencias
+    if (reportType === "rescatado") {
+      submitPublish(fd);
+      return;
+    }
+
+    startCheckTransition(async () => {
+      const result = await previewMatches(fd);
+      if (!result.ok) {
+        setMatchError(result.message ?? "No pudimos buscar coincidencias.");
+        return;
+      }
+      if (result.skipReview || !result.candidates?.length) {
+        submitPublish(fd);
+        return;
+      }
+      // Conservamos el FormData (incluye la foto) aunque el form se desmonte
+      pendingPublishRef.current = fd;
+      setCandidates(result.candidates);
+      setStep("matches");
+    });
+  }
+
   if (state.ok && state.reportId && state.reportType) {
     return (
       <PublishSuccess
@@ -122,8 +181,29 @@ export function ReportForm() {
     );
   }
 
+  if (step === "matches" && reportType) {
+    return (
+      <MatchReview
+        candidates={candidates}
+        yourType={reportType}
+        checking={checkingMatches}
+        publishing={pending}
+        error={matchError ?? (state.message && !state.ok ? state.message : undefined)}
+        onPublishAnyway={submitPublish}
+        onBack={() => {
+          setStep("form");
+          setMatchError(null);
+        }}
+      />
+    );
+  }
+
   return (
-    <form action={formAction} className="space-y-6">
+    <form
+      ref={formRef}
+      onSubmit={onFormSubmit}
+      className="space-y-6"
+    >
       <fieldset className="space-y-3">
         <legend className="text-sm font-bold uppercase tracking-wide text-muted">
           Tipo de reporte
@@ -364,18 +444,18 @@ export function ReportForm() {
         </label>
       </div>
 
-      {state.message && !state.ok ? (
+      {(matchError || (state.message && !state.ok)) ? (
         <p
           role="alert"
           className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"
         >
-          {state.message}
+          {matchError ?? state.message}
         </p>
       ) : null}
 
       <button
         type="submit"
-        disabled={!reportType || !hasPhoto || pending || cropping}
+        disabled={!reportType || !hasPhoto || pending || cropping || checkingMatches}
         className="tap-target flex w-full items-center justify-center gap-2 rounded-2xl bg-primary px-4 py-4 text-base font-bold text-white transition hover:bg-primary-dark disabled:cursor-not-allowed disabled:opacity-50"
       >
         {pending ? (
@@ -383,13 +463,20 @@ export function ReportForm() {
             <Loader2 className="h-5 w-5 animate-spin" aria-hidden />
             Publicando…
           </>
+        ) : checkingMatches ? (
+          <>
+            <Loader2 className="h-5 w-5 animate-spin" aria-hidden />
+            Buscando coincidencias…
+          </>
         ) : cropping ? (
           <>
             <Loader2 className="h-5 w-5 animate-spin" aria-hidden />
             Preparando foto…
           </>
-        ) : (
+        ) : reportType === "rescatado" ? (
           "Publicar reporte"
+        ) : (
+          "Revisar y publicar"
         )}
       </button>
     </form>

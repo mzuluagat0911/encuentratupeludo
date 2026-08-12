@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import Script from "next/script";
 import { Fraunces, Plus_Jakarta_Sans } from "next/font/google";
+import { getSiteUrl } from "@/lib/site";
 import "./globals.css";
 
 const META_PIXEL_ID = "1748718532818668";
@@ -18,6 +19,7 @@ const body = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(getSiteUrl()),
   title: "Ubica tu Peludo | Reúne mascotas tras un sismo",
   description:
     "Plataforma de emergencia en Colombia para reportar y encontrar mascotas perdidas o vistas en la calle. Sin registro.",
@@ -28,6 +30,7 @@ export const metadata: Metadata = {
       "Ayuda a reunir familias con sus mascotas después de un sismo. Publica o busca sin crear cuenta.",
     locale: "es_CO",
     type: "website",
+    siteName: "Ubica tu Peludo",
   },
 };
 

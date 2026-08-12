@@ -5,11 +5,15 @@ import { createReport, usingLocalStore } from "@/lib/reports";
 import { createServerClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/client";
 import { normalizeColombianPhone } from "@/lib/whatsapp";
-import type { PetType, ReportType } from "@/lib/types";
+import type { PetReport, PetType, ReportType } from "@/lib/types";
 import { COLOMBIA_CITIES } from "@/lib/cities";
 import { checkPublishContent } from "@/lib/contentFilter";
 import { looksLikeRescuedDescription } from "@/lib/rescued";
 import { sanitizeResponsibleName } from "@/lib/responsible";
+import {
+  findCandidateMatches,
+  oppositeReportType,
+} from "@/lib/matches";
 import { promises as fs } from "fs";
 import path from "path";
 import { randomUUID } from "crypto";
@@ -19,6 +23,14 @@ export type PublishState = {
   message?: string;
   reportId?: string;
   reportType?: ReportType;
+};
+
+export type PreviewMatchesState = {
+  ok: boolean;
+  message?: string;
+  candidates?: PetReport[];
+  /** true si no aplica revisión (rescatado) o no hubo candidatos */
+  skipReview?: boolean;
 };
 
 function isValidReportType(
@@ -93,6 +105,59 @@ async function uploadPhoto(file: File): Promise<string | null> {
   await fs.mkdir(uploadsDir, { recursive: true });
   await fs.writeFile(path.join(uploadsDir, filename), bytes);
   return `/uploads/${filename}`;
+}
+
+/**
+ * Busca posibles coincidencias sin IA (ciudad + animal + tipo contrario).
+ * Si no hay ninguna, el cliente publica directo.
+ */
+export async function previewMatches(
+  formData: FormData,
+): Promise<PreviewMatchesState> {
+  try {
+    const reportType = formData.get("report_type");
+    const petType = formData.get("pet_type");
+    const city = String(formData.get("city") || "").trim();
+    const neighborhood = String(formData.get("neighborhood") || "").trim();
+
+    if (!isValidReportType(reportType)) {
+      return { ok: false, message: "Elige el tipo de reporte." };
+    }
+    if (!oppositeReportType(reportType)) {
+      return { ok: true, candidates: [], skipReview: true };
+    }
+    if (!isValidPetType(petType)) {
+      return { ok: false, message: "Elige si es perro o gato." };
+    }
+    if (!city || !(COLOMBIA_CITIES as readonly string[]).includes(city)) {
+      return { ok: false, message: "Selecciona una ciudad válida." };
+    }
+    if (neighborhood.length < 3) {
+      return {
+        ok: false,
+        message: "Indica el sector, barrio o lugar (mínimo 3 caracteres).",
+      };
+    }
+
+    const ranked = await findCandidateMatches({
+      reportType,
+      petType,
+      city,
+      neighborhood,
+      limit: 8,
+    });
+
+    const candidates = ranked.map((r) => r.report);
+    return {
+      ok: true,
+      candidates,
+      skipReview: candidates.length === 0,
+    };
+  } catch (err) {
+    const message =
+      err instanceof Error ? err.message : "No pudimos buscar coincidencias.";
+    return { ok: false, message };
+  }
 }
 
 export async function publishReport(
