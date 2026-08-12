@@ -152,12 +152,18 @@ export function getHubCityByName(city: string): HubCity | null {
   return getHubCityBySlug(slug);
 }
 
-/** Banner del feed: ciudad filtrada, o la primera con ayuda si no hay filtro. */
-export function hubCityForFeedFilter(cityFilter: string): HubCity | null {
+/** Banner del feed: ciudad filtrada, o todas las ciudades con ayuda. */
+export function hubsForFeedBanner(cityFilter: string): HubCity[] {
   if (cityFilter && cityFilter !== "todas") {
-    return getHubCityByName(cityFilter);
+    const one = getHubCityByName(cityFilter);
+    return one ? [one] : [];
   }
-  return listHubCities()[0] ?? null;
+  return listHubCities();
+}
+
+/** @deprecated Prefer hubsForFeedBanner */
+export function hubCityForFeedFilter(cityFilter: string): HubCity | null {
+  return hubsForFeedBanner(cityFilter)[0] ?? null;
 }
 
 export function buildHubWhatsAppUrl(place: HubPlace): string | null {

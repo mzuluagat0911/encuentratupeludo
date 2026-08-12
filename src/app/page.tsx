@@ -8,7 +8,7 @@ import { LocalModeBanner } from "@/components/LocalModeBanner";
 import { PublishFab } from "@/components/PublishFab";
 import { listReports, usingLocalStore } from "@/lib/reports";
 import { countFeedReports } from "@/lib/rescueOps";
-import { hubCityForFeedFilter } from "@/lib/hubs";
+import { hubsForFeedBanner } from "@/lib/hubs";
 import { CityHelpBanner } from "@/components/CityHelpBanner";
 import type { PetType, ReportType } from "@/lib/types";
 
@@ -46,7 +46,7 @@ export default async function HomePage({ searchParams }: PageProps<"/">) {
     responsible: responsable || undefined,
   });
   const counts = await countFeedReports();
-  const helpHub = hubCityForFeedFilter(ciudad);
+  const helpHubs = hubsForFeedBanner(ciudad);
 
   return (
     <>
@@ -57,7 +57,7 @@ export default async function HomePage({ searchParams }: PageProps<"/">) {
       />
       <main className="flex-1 pb-24">
         <HomeHero />
-        {helpHub ? <CityHelpBanner hub={helpHub} /> : null}
+        <CityHelpBanner hubs={helpHubs} />
         <section id="reportes" className="mx-auto max-w-3xl px-4 py-6">
           {usingLocalStore() ? <LocalModeBanner /> : null}
 
