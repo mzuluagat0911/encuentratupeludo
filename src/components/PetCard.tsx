@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { Cat, Dog, HeartHandshake, MapPin, MessageCircle } from "lucide-react";
+import { Cat, Dog, HeartHandshake, MapPin, MessageCircle, UserRound } from "lucide-react";
 import type { PetReport } from "@/lib/types";
 import { formatRelativeDate } from "@/lib/format";
 import { buildWhatsAppUrl, whatsappButtonLabel } from "@/lib/whatsapp";
@@ -74,6 +74,13 @@ export function PetCard({ report }: Props) {
             <p className="text-muted">{report.city}</p>
           </div>
         </div>
+
+        {report.responsible_name ? (
+          <p className="flex items-center gap-2 text-sm font-medium text-foreground">
+            <UserRound className="h-4 w-4 shrink-0 text-primary" aria-hidden />
+            <span>{report.responsible_name}</span>
+          </p>
+        ) : null}
 
         {report.description ? (
           <p className="line-clamp-3 text-sm leading-relaxed text-muted">

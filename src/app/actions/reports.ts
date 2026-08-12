@@ -9,6 +9,7 @@ import type { PetType, ReportType } from "@/lib/types";
 import { COLOMBIA_CITIES } from "@/lib/cities";
 import { checkPublishContent } from "@/lib/contentFilter";
 import { looksLikeRescuedDescription } from "@/lib/rescued";
+import { sanitizeResponsibleName } from "@/lib/responsible";
 import { promises as fs } from "fs";
 import path from "path";
 import { randomUUID } from "crypto";
@@ -104,6 +105,9 @@ export async function publishReport(
     const neighborhood = String(formData.get("neighborhood") || "").trim();
     const phoneRaw = String(formData.get("phone") || "").trim();
     const description = String(formData.get("description") || "").trim();
+    const responsibleName = sanitizeResponsibleName(
+      String(formData.get("responsible_name") || ""),
+    );
     const photo = formData.get("photo");
 
     if (!isValidReportType(reportType)) {
@@ -121,10 +125,17 @@ export async function publishReport(
         message: "Indica el sector, barrio o lugar (mínimo 3 caracteres).",
       };
     }
+    if (!responsibleName) {
+      return {
+        ok: false,
+        message: "Escribe el nombre de quien publica (solo letras, 2 a 60 caracteres).",
+      };
+    }
 
     const contentCheck = checkPublishContent({
       neighborhood,
       description,
+      responsibleName,
     });
     if (contentCheck.blocked) {
       return { ok: false, message: contentCheck.reason };
@@ -164,6 +175,7 @@ export async function publishReport(
       city,
       neighborhood,
       phone,
+      responsible_name: responsibleName,
       description: description || null,
     });
 

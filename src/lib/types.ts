@@ -9,6 +9,7 @@ export type PetReport = {
   city: string;
   neighborhood: string;
   phone: string;
+  responsible_name: string | null;
   description: string | null;
   created_at: string;
 };
@@ -20,6 +21,7 @@ export type CreateReportInput = {
   city: string;
   neighborhood: string;
   phone: string;
+  responsible_name?: string | null;
   description?: string | null;
 };
 
@@ -27,4 +29,5 @@ export type ReportFilters = {
   reportType?: ReportType | "todas";
   petType?: PetType | "todos";
   city?: string;
+  responsible?: string;
 };

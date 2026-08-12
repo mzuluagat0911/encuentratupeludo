@@ -1,7 +1,9 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { Search } from "lucide-react";
 import { COLOMBIA_CITIES } from "@/lib/cities";
 
 const TABS: {
@@ -29,21 +31,42 @@ export function FeedFilters() {
   const tipo = searchParams.get("tipo") || "todas";
   const animal = searchParams.get("animal") || "todos";
   const ciudad = searchParams.get("ciudad") || "todas";
+  const nombreParam = searchParams.get("nombre") || "";
+  const [nombre, setNombre] = useState(nombreParam);
+  const searchParamsRef = useRef(searchParams);
+  searchParamsRef.current = searchParams;
+
+  useEffect(() => {
+    setNombre(nombreParam);
+  }, [nombreParam]);
+
+  function pushParams(params: URLSearchParams) {
+    const qs = params.toString();
+    router.push(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+  }
 
   function update(key: string, value: string) {
     const params = new URLSearchParams(searchParams.toString());
-    if (
-      value === "todas" ||
-      value === "todos" ||
-      (key === "ciudad" && value === "todas")
-    ) {
+    if (!value.trim() || value === "todas" || value === "todos") {
       params.delete(key);
     } else {
       params.set(key, value);
     }
-    const qs = params.toString();
-    router.push(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+    pushParams(params);
   }
+
+  useEffect(() => {
+    const trimmed = nombre.trim();
+    if (trimmed === nombreParam.trim()) return;
+    const t = window.setTimeout(() => {
+      const params = new URLSearchParams(searchParamsRef.current.toString());
+      if (!trimmed) params.delete("nombre");
+      else params.set("nombre", trimmed);
+      pushParams(params);
+    }, 350);
+    return () => window.clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- debounce only on local input
+  }, [nombre, nombreParam]);
 
   return (
     <div className="space-y-3">
@@ -85,6 +108,30 @@ export function FeedFilters() {
           );
         })}
       </div>
+
+      <label className="block">
+        <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-muted">
+          Nombre del responsable
+        </span>
+        <div className="relative">
+          <Search
+            className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted"
+            aria-hidden
+          />
+          <input
+            type="search"
+            value={nombre}
+            onChange={(e) => setNombre(e.target.value)}
+            placeholder="Ej. María Gómez"
+            autoComplete="off"
+            enterKeyHint="search"
+            className="tap-target w-full rounded-2xl border border-line bg-white py-3 pl-10 pr-3 text-sm font-medium text-foreground outline-none ring-primary focus:ring-2"
+          />
+        </div>
+        <span className="mt-1 block text-[11px] text-muted">
+          Busca por quien publicó. Los reportes viejos pueden no tener nombre.
+        </span>
+      </label>
 
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
         <label className="block">

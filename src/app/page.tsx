@@ -35,11 +35,14 @@ export default async function HomePage({ searchParams }: PageProps<"/">) {
     typeof params.ciudad === "string" && params.ciudad
       ? params.ciudad
       : "todas";
+  const responsable =
+    typeof params.nombre === "string" ? params.nombre.trim() : "";
 
   const reports = await listReports({
     reportType: tipo,
     petType: animal,
     city: ciudad,
+    responsible: responsable || undefined,
   });
   const counts = await countFeedReports();
 

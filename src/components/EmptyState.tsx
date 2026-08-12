@@ -9,8 +9,8 @@ export function EmptyState() {
         No hay reportes con estos filtros
       </h3>
       <p className="mt-2 text-sm text-muted">
-        Prueba otra ciudad o tipo de animal, o sé la primera persona en
-        publicar.
+        Prueba otro nombre, ciudad o tipo de animal, o sé la primera persona
+        en publicar.
       </p>
       <Link
         href="/publicar"

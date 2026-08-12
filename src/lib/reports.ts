@@ -8,6 +8,11 @@ import type {
   PetReport,
   ReportFilters,
 } from "@/lib/types";
+import {
+  encodeResponsibleInDescription,
+  hydrateReport,
+  matchesResponsibleName,
+} from "@/lib/responsible";
 
 const DATA_DIR = path.join(process.cwd(), ".data");
 const DATA_FILE = path.join(DATA_DIR, "reports.json");
@@ -21,6 +26,7 @@ const SEED_REPORTS: PetReport[] = [
     city: "Bogotá",
     neighborhood: "Cerca al parque El Virrey",
     phone: "3001234567",
+    responsible_name: "Ana Gómez",
     description: "Labrador color chocolate, collar rojo, responde al nombre Milo.",
     created_at: new Date(Date.now() - 1000 * 60 * 45).toISOString(),
   },
@@ -32,6 +38,7 @@ const SEED_REPORTS: PetReport[] = [
     city: "Medellín",
     neighborhood: "Laureles, cerca a la iglesia",
     phone: "3109876543",
+    responsible_name: "Carlos Pérez",
     description: "Gato naranja con manchas blancas en el pecho. Muy sociable.",
     created_at: new Date(Date.now() - 1000 * 60 * 60 * 3).toISOString(),
   },
@@ -43,6 +50,7 @@ const SEED_REPORTS: PetReport[] = [
     city: "Cali",
     neighborhood: "San Antonio",
     phone: "3155551212",
+    responsible_name: "Laura Restrepo",
     description: "Gata gris pequeña, ojos verdes, sin collar.",
     created_at: new Date(Date.now() - 1000 * 60 * 60 * 8).toISOString(),
   },
@@ -54,6 +62,7 @@ const SEED_REPORTS: PetReport[] = [
     city: "Bucaramanga",
     neighborhood: "Cabecera del Llano",
     phone: "3204448899",
+    responsible_name: "Diego Morales",
     description: "Perro mediano café, parece mestizo, asustado pero sin heridas visibles.",
     created_at: new Date(Date.now() - 1000 * 60 * 60 * 20).toISOString(),
   },
@@ -87,6 +96,7 @@ function applyFilters(reports: PetReport[], filters: ReportFilters): PetReport[]
       if (filters.city && filters.city !== "todas") {
         if (r.city !== filters.city) return false;
       }
+      if (!matchesResponsibleName(r, filters.responsible)) return false;
       return true;
     })
     .sort(
@@ -97,7 +107,7 @@ function applyFilters(reports: PetReport[], filters: ReportFilters): PetReport[]
 
 async function listLocal(filters: ReportFilters): Promise<PetReport[]> {
   const reports = await ensureLocalStore();
-  return applyFilters(reports, filters);
+  return applyFilters(reports.map((row) => hydrateReport(row)), filters);
 }
 
 async function createLocal(input: CreateReportInput): Promise<PetReport> {
@@ -110,6 +120,7 @@ async function createLocal(input: CreateReportInput): Promise<PetReport> {
     city: input.city,
     neighborhood: input.neighborhood.trim(),
     phone: input.phone,
+    responsible_name: input.responsible_name?.trim() || null,
     description: input.description?.trim() || null,
     created_at: new Date().toISOString(),
   };
@@ -145,23 +156,61 @@ async function listSupabase(filters: ReportFilters): Promise<PetReport[]> {
     console.error("Supabase list error:", error.message);
     throw new Error("No pudimos cargar los reportes. Intenta de nuevo.");
   }
-  return (data ?? []) as PetReport[];
+  return applyFilters(
+    ((data ?? []) as PetReport[]).map((row) => hydrateReport(row)),
+    { responsible: filters.responsible },
+  );
 }
+
+let responsibleColumnMissing = false;
 
 async function createSupabase(input: CreateReportInput): Promise<PetReport> {
   const supabase = createServerClient();
   if (!supabase) return createLocal(input);
 
+  const name = input.responsible_name?.trim() || null;
+  const description = input.description?.trim() || null;
+  const base = {
+    report_type: input.report_type,
+    pet_type: input.pet_type,
+    photo_url: input.photo_url ?? null,
+    city: input.city,
+    neighborhood: input.neighborhood.trim(),
+    phone: input.phone,
+  };
+
+  if (!responsibleColumnMissing) {
+    const withColumn = await supabase
+      .from("pet_reports")
+      .insert({
+        ...base,
+        responsible_name: name,
+        description,
+      })
+      .select("*")
+      .single();
+
+    if (!withColumn.error && withColumn.data) {
+      return hydrateReport(withColumn.data as PetReport);
+    }
+
+    const missingColumn = /responsible_name/i.test(
+      withColumn.error?.message || "",
+    );
+    if (!missingColumn) {
+      console.error("Supabase create error:", withColumn.error?.message);
+      throw new Error("No pudimos publicar el reporte. Intenta de nuevo.");
+    }
+    responsibleColumnMissing = true;
+  }
+
   const { data, error } = await supabase
     .from("pet_reports")
     .insert({
-      report_type: input.report_type,
-      pet_type: input.pet_type,
-      photo_url: input.photo_url ?? null,
-      city: input.city,
-      neighborhood: input.neighborhood.trim(),
-      phone: input.phone,
-      description: input.description?.trim() || null,
+      ...base,
+      description: name
+        ? encodeResponsibleInDescription(name, description)
+        : description,
     })
     .select("*")
     .single();
@@ -170,7 +219,7 @@ async function createSupabase(input: CreateReportInput): Promise<PetReport> {
     console.error("Supabase create error:", error?.message);
     throw new Error("No pudimos publicar el reporte. Intenta de nuevo.");
   }
-  return data as PetReport;
+  return hydrateReport(data as PetReport);
 }
 
 export async function listReports(

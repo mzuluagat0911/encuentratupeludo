@@ -10,6 +10,7 @@ create table if not exists public.pet_reports (
   city text not null,
   neighborhood text not null,
   phone text not null,
+  responsible_name text,
   description text,
   created_at timestamptz not null default now()
 );
@@ -22,6 +23,10 @@ create index if not exists pet_reports_city_idx
 
 create index if not exists pet_reports_type_idx
   on public.pet_reports (report_type, pet_type);
+
+-- Si la tabla ya existía sin este campo:
+alter table public.pet_reports
+  add column if not exists responsible_name text;
 
 -- 2. Acceso público sin autenticación (lectura y escritura)
 alter table public.pet_reports enable row level security;

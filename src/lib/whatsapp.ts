@@ -16,13 +16,16 @@ export function buildWhatsAppUrl(report: PetReport): string {
   const local = normalizeColombianPhone(report.phone);
   const full = `57${local}`;
 
+  const who = report.responsible_name?.trim();
+  const hi = who ? `Hola ${who}` : "Hola";
+
   let text: string;
   if (report.report_type === "perdido") {
-    text = `Hola, vi tu reporte en la app sobre tu mascota perdida en ${report.neighborhood}, ${report.city}. Creo que la vi/tengo información.`;
+    text = `${hi}, vi tu reporte en la app sobre tu mascota perdida en ${report.neighborhood}, ${report.city}. Creo que la vi/tengo información.`;
   } else if (report.report_type === "encontrado") {
-    text = `Hola, vi que reportaste una mascota encontrada en ${report.neighborhood}, ${report.city}. Creo que es la mía.`;
+    text = `${hi}, vi que reportaste una mascota encontrada en ${report.neighborhood}, ${report.city}. Creo que es la mía.`;
   } else {
-    text = `Hola, vi tu reporte de mascota rescatada en ${report.neighborhood}, ${report.city}.`;
+    text = `${hi}, vi tu reporte de mascota rescatada en ${report.neighborhood}, ${report.city}.`;
   }
 
   return `https://wa.me/${full}?text=${encodeURIComponent(text)}`;

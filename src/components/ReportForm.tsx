@@ -10,6 +10,7 @@ import {
   Loader2,
   MapPinned,
   Phone,
+  UserRound,
 } from "lucide-react";
 import { COLOMBIA_CITIES } from "@/lib/cities";
 import {
@@ -215,6 +216,25 @@ export function ReportForm() {
             placeholder='Ej. "Cerca al parque El Virrey"'
             className="tap-target w-full rounded-2xl border border-line bg-white px-4 py-3.5 text-base outline-none ring-primary focus:ring-2"
           />
+        </label>
+
+        <label className="block">
+          <span className="mb-2 flex items-center gap-2 text-sm font-bold uppercase tracking-wide text-muted">
+            <UserRound className="h-4 w-4" aria-hidden />
+            Nombre de quien publica
+          </span>
+          <input
+            name="responsible_name"
+            required
+            minLength={2}
+            maxLength={60}
+            autoComplete="name"
+            placeholder="Ej. María Gómez"
+            className="tap-target w-full rounded-2xl border border-line bg-white px-4 py-3.5 text-base outline-none ring-primary focus:ring-2"
+          />
+          <span className="mt-1.5 block text-xs text-muted">
+            Así otras personas pueden filtrar y encontrarte más fácil.
+          </span>
         </label>
 
         <label className="block">

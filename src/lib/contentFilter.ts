@@ -60,9 +60,10 @@ export type ContentFilterResult =
 export function checkPublishContent(input: {
   neighborhood: string;
   description?: string | null;
+  responsibleName?: string | null;
 }): ContentFilterResult {
   const combined = normalizeForFilter(
-    `${input.neighborhood} ${input.description || ""}`,
+    `${input.neighborhood} ${input.responsibleName || ""} ${input.description || ""}`,
   );
 
   if (!combined) return { blocked: false };
