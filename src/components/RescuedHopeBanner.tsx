@@ -25,7 +25,7 @@ export function RescuedHopeBanner({ rescued, lost, seen }: Props) {
             {n}
           </span>
           <span className="mt-0.5 text-[9px] font-bold uppercase tracking-wide text-rescued/80 sm:text-[10px]">
-            Reunidos
+            Rescatados
           </span>
         </Link>
         <Link
