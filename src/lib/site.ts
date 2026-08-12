@@ -1,16 +1,24 @@
+function normalizeOrigin(value: string): string {
+  const trimmed = value.trim().replace(/\/$/, "");
+  if (/^https?:\/\//i.test(trimmed)) return trimmed;
+  return `https://${trimmed.replace(/^https?:\/\//, "")}`;
+}
+
 /**
  * URL canónica del sitio (para Open Graph, Meta ads y compartir).
- * En Vercel usa VERCEL_URL si no hay NEXT_PUBLIC_SITE_URL.
+ * Prioridad: NEXT_PUBLIC_SITE_URL → dominio de producción Vercel → deployment.
+ * Nunca uses el hostname de preview (…-xxx.vercel.app) al pautar.
  */
 export function getSiteUrl(): string {
   const explicit = process.env.NEXT_PUBLIC_SITE_URL?.trim();
-  if (explicit) return explicit.replace(/\/$/, "");
+  if (explicit) return normalizeOrigin(explicit);
+
+  // Dominio estable de producción (no el URL único del deployment)
+  const production = process.env.VERCEL_PROJECT_PRODUCTION_URL?.trim();
+  if (production) return normalizeOrigin(production);
 
   const vercel = process.env.VERCEL_URL?.trim();
-  if (vercel) {
-    const host = vercel.replace(/^https?:\/\//, "");
-    return `https://${host}`;
-  }
+  if (vercel) return normalizeOrigin(vercel);
 
   return "http://localhost:3000";
 }
