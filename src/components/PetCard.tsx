@@ -30,15 +30,26 @@ export function PetCard({ report }: Props) {
 
   return (
     <article className="overflow-hidden rounded-3xl border border-line bg-card shadow-[0_8px_24px_-16px_rgba(26,46,40,0.35)]">
-      <div className="relative aspect-[4/3] bg-gradient-to-br from-[#e8f4ef] to-[#f3ebe3]">
+      <div className="relative aspect-[4/3] overflow-hidden bg-gradient-to-br from-[#e8f4ef] to-[#f3ebe3]">
         {report.photo_url ? (
-          <Image
-            src={report.photo_url}
-            alt={`${report.pet_type} ${typeLabel(report.report_type).toLowerCase()} en ${report.city}`}
-            fill
-            className="object-cover"
-            sizes="(max-width: 768px) 100vw, 480px"
-          />
+          <>
+            {/* Fondo difuminado para que no se vean bandas vacías */}
+            <Image
+              src={report.photo_url}
+              alt=""
+              fill
+              aria-hidden
+              className="scale-110 object-cover blur-2xl opacity-50"
+              sizes="(max-width: 768px) 100vw, 480px"
+            />
+            <Image
+              src={report.photo_url}
+              alt={`${report.pet_type} ${typeLabel(report.report_type).toLowerCase()} en ${report.city}`}
+              fill
+              className="object-contain"
+              sizes="(max-width: 768px) 100vw, 480px"
+            />
+          </>
         ) : (
           <div className="flex h-full w-full flex-col items-center justify-center gap-2 text-muted">
             <PetIcon className="h-14 w-14 opacity-50" aria-hidden />
