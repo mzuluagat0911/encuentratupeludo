@@ -100,6 +100,30 @@ const PLACES: HubPlace[] = [
     nequi: "3054758235",
     seeksFosterHomes: true,
   },
+  {
+    id: "manizales-coliseo-ucaldas",
+    city: "Manizales",
+    slug: "manizales",
+    name: "Coliseo Universidad de Caldas",
+    type: "veterinaria",
+    neighborhood: "Universidad de Caldas",
+    address: "Coliseo de la Universidad de Caldas, Manizales",
+    phone: null,
+    mapsUrl: null,
+    instagramUrl: null,
+    instagramHandle: null,
+    hours: "Atención veterinaria de emergencia",
+    note: "En el coliseo de la Universidad de Caldas se está brindando atención veterinaria a peluditos afectados. Lleva a tu animalito si necesita revisión o cuidados urgentes.",
+    needs: [
+      "Insumos médicos (gasas, suturas, lactato, guantes)",
+      "Alimento para perros y gatos",
+      "Mantas y cobijas",
+    ],
+    donate:
+      "Puedes apoyar llevando insumos médicos o alimento al coliseo. Si tienes un contacto o Nequi para donaciones, escríbenos para publicarlo aquí.",
+    nequi: null,
+    seeksFosterHomes: false,
+  },
 ];
 
 export function listHubCities(): HubCity[] {
