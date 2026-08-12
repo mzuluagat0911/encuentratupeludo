@@ -1,7 +1,19 @@
 import Link from "next/link";
 import { HeartHandshake, Plus } from "lucide-react";
+import { RescuedHopeBanner } from "@/components/RescuedHopeBanner";
 
-export function SiteHeader() {
+type Props = {
+  rescued?: number;
+  lost?: number;
+  seen?: number;
+};
+
+export function SiteHeader({ rescued, lost, seen }: Props = {}) {
+  const showStats =
+    typeof rescued === "number" &&
+    typeof lost === "number" &&
+    typeof seen === "number";
+
   return (
     <header className="sticky top-0 z-40 border-b border-line/70 bg-[#f7fbf8]/90 backdrop-blur-md">
       <div className="mx-auto flex max-w-3xl items-center justify-between gap-3 px-4 py-3">
@@ -37,6 +49,9 @@ export function SiteHeader() {
           </Link>
         </div>
       </div>
+      {showStats ? (
+        <RescuedHopeBanner rescued={rescued} lost={lost} seen={seen} />
+      ) : null}
     </header>
   );
 }

@@ -1,7 +1,6 @@
 import { Suspense } from "react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { HomeHero } from "@/components/HomeHero";
-import { RescuedHopeBanner } from "@/components/RescuedHopeBanner";
 import { FeedFilters } from "@/components/FeedFilters";
 import { PetCard } from "@/components/PetCard";
 import { EmptyState } from "@/components/EmptyState";
@@ -51,15 +50,14 @@ export default async function HomePage({ searchParams }: PageProps<"/">) {
 
   return (
     <>
-      <SiteHeader />
+      <SiteHeader
+        rescued={counts.rescatado}
+        lost={counts.perdido}
+        seen={counts.encontrado}
+      />
       <main className="flex-1 pb-24">
         <HomeHero />
         {helpHub ? <CityHelpBanner hub={helpHub} /> : null}
-        <RescuedHopeBanner
-          rescued={counts.rescatado}
-          lost={counts.perdido}
-          seen={counts.encontrado}
-        />
         <section id="reportes" className="mx-auto max-w-3xl px-4 py-6">
           {usingLocalStore() ? <LocalModeBanner /> : null}
 
