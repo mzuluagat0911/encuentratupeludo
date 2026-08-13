@@ -143,7 +143,18 @@ async function applyFilters(
     return haversineKm(origin, city) <= NEAR_FALLBACK_KM;
   });
 
-  const zones = await geocodeReportZones(metro);
+  // No bloquear “Permitir”: si Photon tarda, usamos ciudad/zona local.
+  let zones = new Map<string, { lat: number; lng: number }>();
+  try {
+    zones = await Promise.race([
+      geocodeReportZones(metro),
+      new Promise<Map<string, { lat: number; lng: number }>>((resolve) => {
+        setTimeout(() => resolve(new Map()), 2800);
+      }),
+    ]);
+  } catch {
+    zones = new Map();
+  }
 
   const ranked = metro
     .map((r) => {

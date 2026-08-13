@@ -1,14 +1,23 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { Loader2, MapPin, X } from "lucide-react";
 
 const COORDS_KEY = "ubicatupeludo.near";
 const SKIP_KEY = "ubicatupeludo.near.skip";
 
+function geoErrorMessage(err: GeolocationPositionError): string {
+  if (err.code === err.PERMISSION_DENIED) {
+    return "El navegador bloqueó la ubicación. En Safari/Chrome: Ajustes → Sitios → Ubicación → Permitir, y recarga.";
+  }
+  if (err.code === err.TIMEOUT) {
+    return "Tardó demasiado en ubicar. Activa el GPS y vuelve a tocar Permitir.";
+  }
+  return "No pudimos leer tu ubicación. Revisa que el GPS esté activo e intenta de nuevo.";
+}
+
 export function NearMeButton() {
-  const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [busy, setBusy] = useState(false);
@@ -17,56 +26,48 @@ export function NearMeButton() {
   const askedRef = useRef(false);
 
   const active = Boolean(searchParams.get("lat") && searchParams.get("lng"));
-  const showAsk = !active && !skipped && !busy;
 
-  function pushWith(lat: number, lng: number) {
-    const params = new URLSearchParams(searchParams.toString());
-    params.set("lat", lat.toFixed(5));
-    params.set("lng", lng.toFixed(5));
-    params.delete("ciudad");
-    const qs = params.toString();
-    router.push(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
-  }
-
-  function saveCoords(lat: number, lng: number) {
+  function goToNear(lat: number, lng: number) {
     try {
       localStorage.setItem(COORDS_KEY, JSON.stringify({ lat, lng }));
       sessionStorage.removeItem(SKIP_KEY);
     } catch {
       /* ignore */
     }
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("lat", lat.toFixed(5));
+    params.set("lng", lng.toFixed(5));
+    params.delete("ciudad");
+    const qs = params.toString();
+    // Navegación completa: más fiable que router.push tras el prompt de GPS
+    window.location.assign(qs ? `${pathname}?${qs}` : pathname);
   }
 
   function locate() {
-    if (!navigator.geolocation) {
-      setError("Tu navegador no permite ubicación.");
+    if (typeof window === "undefined" || !navigator.geolocation) {
+      setError("Este navegador no permite ubicación. Ábrelo en Safari o Chrome.");
       return;
     }
-    setBusy(true);
+
     setError(null);
+    setBusy(true);
+
     navigator.geolocation.getCurrentPosition(
       (pos) => {
-        const lat = pos.coords.latitude;
-        const lng = pos.coords.longitude;
-        saveCoords(lat, lng);
-        pushWith(lat, lng);
-        setBusy(false);
+        goToNear(pos.coords.latitude, pos.coords.longitude);
       },
       (err) => {
         setBusy(false);
-        if (err.code === err.PERMISSION_DENIED) {
-          setSkipped(true);
-          setError("Sin ubicación no podemos ordenar por cercanía. Puedes activarla cuando quieras.");
-        } else {
-          setError("No pudimos leer tu ubicación. Intenta de nuevo.");
-        }
+        if (err.code === err.PERMISSION_DENIED) setSkipped(true);
+        setError(geoErrorMessage(err));
       },
-      { enableHighAccuracy: false, timeout: 12000, maximumAge: 180000 },
+      { enableHighAccuracy: false, timeout: 20000, maximumAge: 60000 },
     );
   }
 
   function skip() {
     setSkipped(true);
+    setError(null);
     try {
       sessionStorage.setItem(SKIP_KEY, "1");
     } catch {
@@ -81,54 +82,22 @@ export function NearMeButton() {
     } catch {
       /* ignore */
     }
-    setSkipped(true);
     const params = new URLSearchParams(searchParams.toString());
     params.delete("lat");
     params.delete("lng");
     const qs = params.toString();
-    router.push(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+    window.location.assign(qs ? `${pathname}?${qs}` : pathname);
   }
 
   useEffect(() => {
     if (active || askedRef.current) return;
     askedRef.current = true;
-
     try {
-      if (sessionStorage.getItem(SKIP_KEY) === "1") {
-        setSkipped(true);
-        return;
-      }
+      if (sessionStorage.getItem(SKIP_KEY) === "1") setSkipped(true);
     } catch {
       /* ignore */
     }
-
-    try {
-      const raw = localStorage.getItem(COORDS_KEY);
-      if (raw) {
-        const saved = JSON.parse(raw) as { lat?: number; lng?: number };
-        if (typeof saved.lat === "number" && typeof saved.lng === "number") {
-          pushWith(saved.lat, saved.lng);
-          return;
-        }
-      }
-    } catch {
-      /* ignore */
-    }
-
-    // Si el navegador ya había dado permiso, aplicar sin tocar de nuevo.
-    const permissions = navigator.permissions;
-    if (permissions?.query) {
-      permissions
-        .query({ name: "geolocation" })
-        .then((status) => {
-          if (status.state === "granted") locate();
-        })
-        .catch(() => {
-          /* el aviso de Permitir queda visible */
-        });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [active]);
 
   if (active) {
     return (
@@ -145,7 +114,7 @@ export function NearMeButton() {
 
   return (
     <div className="space-y-2">
-      {showAsk ? (
+      {!skipped ? (
         <div className="rounded-3xl border-2 border-primary/25 bg-white px-4 py-4 shadow-sm">
           <p className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-primary">
             <MapPin className="h-3.5 w-3.5" aria-hidden />
@@ -155,25 +124,27 @@ export function NearMeButton() {
             ¿Qué hay de tu lado?
           </h3>
           <p className="mt-1 text-sm leading-relaxed text-muted">
-            Permite la ubicación para ver peludos <strong>potencialmente cerca
-            de ti</strong>. No la guardamos en el servidor. Cada reporte se
-            ubica por ciudad y zona, no es un pin exacto.
+            Toca Permitir y acepta el aviso del navegador (arriba o abajo). Así
+            vemos peludos potencialmente cerca. No guardamos tu GPS.
           </p>
           <div className="mt-3 grid grid-cols-2 gap-2">
             <button
               type="button"
               onClick={locate}
               disabled={busy}
-              className="tap-target inline-flex items-center justify-center gap-2 rounded-2xl bg-primary px-3 py-3 text-sm font-bold text-white hover:bg-primary-dark disabled:opacity-60"
+              className="tap-target inline-flex items-center justify-center gap-2 rounded-2xl bg-primary px-3 py-3 text-sm font-bold text-white hover:bg-primary-dark disabled:opacity-70"
             >
               {busy ? (
                 <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
-              ) : null}
-              {busy ? "Ubicándote…" : "Permitir"}
+              ) : (
+                <MapPin className="h-4 w-4" aria-hidden />
+              )}
+              {busy ? "Espera el aviso…" : "Permitir"}
             </button>
             <button
               type="button"
               onClick={skip}
+              disabled={busy}
               className="tap-target rounded-2xl border border-line px-3 py-3 text-sm font-bold text-foreground hover:bg-[#f3f7f4]"
             >
               Ahora no
@@ -185,17 +156,21 @@ export function NearMeButton() {
           type="button"
           onClick={locate}
           disabled={busy}
-          className="tap-target inline-flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-primary/30 bg-white px-4 py-3 text-sm font-bold text-primary hover:bg-primary/5 disabled:opacity-60"
+          className="tap-target inline-flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-primary/30 bg-white px-4 py-3 text-sm font-bold text-primary hover:bg-primary/5 disabled:opacity-70"
         >
           {busy ? (
             <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
           ) : (
             <MapPin className="h-4 w-4" aria-hidden />
           )}
-          {busy ? "Ubicándote…" : "Ver lo de mi lado"}
+          {busy ? "Espera el aviso…" : "Ver lo de mi lado"}
         </button>
       )}
-      {error ? <p className="text-xs text-lost">{error}</p> : null}
+      {error ? (
+        <p role="alert" className="text-xs leading-relaxed text-lost">
+          {error}
+        </p>
+      ) : null}
     </div>
   );
 }
