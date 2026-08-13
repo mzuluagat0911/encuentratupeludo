@@ -138,7 +138,7 @@ export function NearMeButton() {
         className="tap-target inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-primary px-4 py-3 text-sm font-bold text-white hover:bg-primary-dark"
       >
         <X className="h-4 w-4" aria-hidden />
-        Quitar cerca de mí
+        Ver todos los reportes
       </button>
     );
   }
@@ -152,11 +152,12 @@ export function NearMeButton() {
             Al entrar
           </p>
           <h3 className="mt-1 font-[family-name:var(--font-display)] text-lg font-semibold text-foreground">
-            ¿Ver peludos cerca de ti?
+            ¿Qué hay de tu lado?
           </h3>
           <p className="mt-1 text-sm leading-relaxed text-muted">
-            Pedimos tu ubicación solo para ordenar reportes. No la guardamos
-            en el servidor. Cada animal se ubica por <strong>ciudad y zona</strong>.
+            Permite la ubicación para ver peludos <strong>potencialmente cerca
+            de ti</strong>. No la guardamos en el servidor. Cada reporte se
+            ubica por ciudad y zona, no es un pin exacto.
           </p>
           <div className="mt-3 grid grid-cols-2 gap-2">
             <button
@@ -191,7 +192,7 @@ export function NearMeButton() {
           ) : (
             <MapPin className="h-4 w-4" aria-hidden />
           )}
-          {busy ? "Ubicándote…" : "Cerca de mí"}
+          {busy ? "Ubicándote…" : "Ver lo de mi lado"}
         </button>
       )}
       {error ? <p className="text-xs text-lost">{error}</p> : null}

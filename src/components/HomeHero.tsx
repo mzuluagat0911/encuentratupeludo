@@ -36,7 +36,7 @@ export function HomeHero() {
             href="#reportes"
             className="tap-target inline-flex items-center justify-center rounded-2xl border border-line bg-white/70 px-5 py-3.5 text-base font-semibold text-foreground transition hover:bg-white"
           >
-            Ver cerca de mí
+            Qué hay de mi lado
           </a>
         </div>
       </div>

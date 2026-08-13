@@ -78,12 +78,12 @@ export default async function HomePage({ searchParams }: PageProps<"/">) {
 
           <div className="mb-5">
             <h2 className="font-[family-name:var(--font-display)] text-2xl font-semibold tracking-tight text-foreground">
-              {nearMe ? "Cerca de ti" : "Reportes recientes"}
+              {nearMe ? "Potencialmente cerca de ti" : "Reportes recientes"}
             </h2>
             <p className="mt-1 text-sm text-muted">
               {nearMe
-                ? `Ordenados por distancia (~${NEAR_RADIUS_KM} km). Zona: ${nearCity}. La distancia es aproximada según barrio y ciudad.`
-                : "Filtra, usa “Cerca de mí” o contacta por WhatsApp sin crear cuenta."}
+                ? `Lo que puede estar de tu lado (~${NEAR_RADIUS_KM} km). Zona: ${nearCity}. Distancia aproximada por ciudad y barrio.`
+                : "Permite ubicación para ver qué hay de tu lado, o filtra por ciudad."}
             </p>
           </div>
 

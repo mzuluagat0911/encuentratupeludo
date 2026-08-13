@@ -95,7 +95,7 @@ export function PetCard({ report }: Props) {
                 {typeof report.distance_km === "number" ? (
                   <span className="font-semibold text-primary">
                     {" "}
-                    · a {formatDistanceKm(report.distance_km)}
+                    · a ~{formatDistanceKm(report.distance_km)}
                   </span>
                 ) : null}
               </p>
