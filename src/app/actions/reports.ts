@@ -11,6 +11,7 @@ import { checkPublishContent } from "@/lib/contentFilter";
 import { looksLikeRescuedDescription } from "@/lib/rescued";
 import { sanitizeResponsibleName } from "@/lib/responsible";
 import { geocodeReportPlace } from "@/lib/geocode";
+import { estimateReportPoint } from "@/lib/geo";
 import {
   findCandidateMatches,
   oppositeReportType,
@@ -239,7 +240,18 @@ export async function publishReport(
         ? "rescatado"
         : reportType;
 
-    const coords = await geocodeReportPlace(city, neighborhood);
+    const fallback = estimateReportPoint({ city, neighborhood }).point;
+    let coords = fallback;
+    try {
+      coords = await Promise.race([
+        geocodeReportPlace(city, neighborhood),
+        new Promise<typeof fallback>((resolve) => {
+          setTimeout(() => resolve(fallback), 2000);
+        }),
+      ]);
+    } catch {
+      coords = fallback;
+    }
 
     const report = await createReport({
       report_type: finalType,

@@ -51,6 +51,7 @@ export function ReportForm() {
   const formRef = useRef<HTMLFormElement>(null);
   const skipPreviewRef = useRef(false);
   const fileRef = useRef<HTMLInputElement>(null);
+  const photoFileRef = useRef<File | null>(null);
   const previewRef = useRef<string | null>(null);
 
   useEffect(() => {
@@ -67,6 +68,7 @@ export function ReportForm() {
 
   async function onPhotoChange(file: File | undefined) {
     if (!file) {
+      photoFileRef.current = null;
       setPreviewUrl(null);
       setHasPhoto(false);
       setCropNote(null);
@@ -80,11 +82,8 @@ export function ReportForm() {
 
     try {
       const result = await smartCropPetPhoto(file);
-      if (fileRef.current) {
-        const dt = new DataTransfer();
-        dt.items.add(result.file);
-        fileRef.current.files = dt.files;
-      }
+      photoFileRef.current = result.file;
+      putFileInInput(result.file);
       setPreviewUrl(URL.createObjectURL(result.file));
       setHasPhoto(true);
       setCropNote(
@@ -93,11 +92,8 @@ export function ReportForm() {
           : "Encuadre listo · usamos el centro de la foto",
       );
     } catch {
-      if (fileRef.current) {
-        const dt = new DataTransfer();
-        dt.items.add(file);
-        fileRef.current.files = dt.files;
-      }
+      photoFileRef.current = file;
+      putFileInInput(file);
       setHasPhoto(true);
       setCropNote("No pudimos optimizar el encuadre; usamos tu foto original.");
     } finally {
@@ -105,12 +101,34 @@ export function ReportForm() {
     }
   }
 
+  function putFileInInput(file: File) {
+    const input = fileRef.current;
+    if (!input) return;
+    try {
+      const dt = new DataTransfer();
+      dt.items.add(file);
+      input.files = dt.files;
+    } catch {
+      /* Safari viejo: igual intentamos al enviar */
+    }
+  }
+
+  function ensurePhotoInForm() {
+    const input = fileRef.current;
+    const file = photoFileRef.current;
+    if (!input || !file) return;
+    if (input.files && input.files.length > 0) return;
+    putFileInInput(file);
+  }
+
   function publishNow() {
+    ensurePhotoInForm();
     skipPreviewRef.current = true;
     formRef.current?.requestSubmit();
   }
 
   function onFormSubmit(e: React.FormEvent<HTMLFormElement>) {
+    ensurePhotoInForm();
     if (skipPreviewRef.current) {
       skipPreviewRef.current = false;
       return;
