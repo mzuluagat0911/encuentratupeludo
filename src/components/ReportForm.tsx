@@ -49,7 +49,7 @@ export function ReportForm() {
   const [matchError, setMatchError] = useState<string | null>(null);
   const [checkingMatches, startCheckTransition] = useTransition();
   const formRef = useRef<HTMLFormElement>(null);
-  const pendingPublishRef = useRef<FormData | null>(null);
+  const skipPreviewRef = useRef(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const previewRef = useRef<string | null>(null);
 
@@ -105,19 +105,16 @@ export function ReportForm() {
     }
   }
 
-  function submitPublish(fd?: FormData) {
-    const data = fd ?? pendingPublishRef.current;
-    if (!data) {
-      const form = formRef.current;
-      if (!form) return;
-      formAction(new FormData(form));
-      return;
-    }
-    formAction(data);
+  function publishNow() {
+    skipPreviewRef.current = true;
+    formRef.current?.requestSubmit();
   }
 
   function onFormSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
+    if (skipPreviewRef.current) {
+      skipPreviewRef.current = false;
+      return;
+    }
     if (
       !reportType ||
       !petType ||
@@ -126,32 +123,34 @@ export function ReportForm() {
       pending ||
       checkingMatches
     ) {
+      e.preventDefault();
       return;
     }
 
+    // Rescatados: el action nativo manda la foto bien (sin FormData de cliente)
+    if (reportType === "rescatado") return;
+
+    e.preventDefault();
     const form = e.currentTarget;
-    const fd = new FormData(form);
-    pendingPublishRef.current = fd;
+    const city = String(new FormData(form).get("city") || "").trim();
+    const neighborhood = String(new FormData(form).get("neighborhood") || "").trim();
     setMatchError(null);
 
-    // Rescatados: publicar directo, sin revisión de coincidencias
-    if (reportType === "rescatado") {
-      submitPublish(fd);
-      return;
-    }
-
     startCheckTransition(async () => {
-      const result = await previewMatches(fd);
+      const result = await previewMatches({
+        reportType,
+        petType,
+        city,
+        neighborhood,
+      });
       if (!result.ok) {
         setMatchError(result.message ?? "No pudimos buscar coincidencias.");
         return;
       }
       if (result.skipReview || !result.candidates?.length) {
-        submitPublish(fd);
+        publishNow();
         return;
       }
-      // Conservamos el FormData (incluye la foto) aunque el form se desmonte
-      pendingPublishRef.current = fd;
       setCandidates(result.candidates);
       setStep("matches");
     });
@@ -188,29 +187,32 @@ export function ReportForm() {
     );
   }
 
-  if (step === "matches" && reportType) {
-    return (
-      <MatchReview
-        candidates={candidates}
-        yourType={reportType}
-        checking={checkingMatches}
-        publishing={pending}
-        error={matchError ?? (state.message && !state.ok ? state.message : undefined)}
-        onPublishAnyway={submitPublish}
-        onBack={() => {
-          setStep("form");
-          setMatchError(null);
-        }}
-      />
-    );
-  }
-
   return (
+    <>
+      {step === "matches" && reportType ? (
+        <MatchReview
+          candidates={candidates}
+          yourType={reportType}
+          checking={checkingMatches}
+          publishing={pending}
+          error={
+            matchError ??
+            (state.message && !state.ok ? state.message : undefined)
+          }
+          onPublishAnyway={publishNow}
+          onBack={() => {
+            setStep("form");
+            setMatchError(null);
+          }}
+        />
+      ) : null}
     <form
       ref={formRef}
+      action={formAction}
       onSubmit={onFormSubmit}
-      className="space-y-6"
+      className={step === "matches" ? "hidden" : "space-y-6"}
     >
+      <button type="submit" hidden aria-hidden tabIndex={-1} />
       <fieldset className="space-y-3">
         <legend className="text-sm font-bold uppercase tracking-wide text-muted">
           Tipo de reporte
@@ -502,5 +504,6 @@ export function ReportForm() {
         )}
       </button>
     </form>
+    </>
   );
 }

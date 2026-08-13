@@ -112,14 +112,17 @@ async function uploadPhoto(file: File): Promise<string | null> {
  * Busca posibles coincidencias sin IA (ciudad + animal + tipo contrario).
  * Si no hay ninguna, el cliente publica directo.
  */
-export async function previewMatches(
-  formData: FormData,
-): Promise<PreviewMatchesState> {
+export async function previewMatches(input: {
+  reportType: string;
+  petType: string;
+  city: string;
+  neighborhood: string;
+}): Promise<PreviewMatchesState> {
   try {
-    const reportType = formData.get("report_type");
-    const petType = formData.get("pet_type");
-    const city = String(formData.get("city") || "").trim();
-    const neighborhood = String(formData.get("neighborhood") || "").trim();
+    const reportType = input.reportType;
+    const petType = input.petType;
+    const city = input.city.trim();
+    const neighborhood = input.neighborhood.trim();
 
     if (!isValidReportType(reportType)) {
       return { ok: false, message: "Elige el tipo de reporte." };
