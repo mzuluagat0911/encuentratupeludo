@@ -66,6 +66,7 @@ export const GEO_PLACES: GeoPlace[] = [
   place("Dosquebradas", 4.8394, -75.6673, "Pereira", ["dosquebradas", "milan", "alamos"]),
   place("Santa Rosa de Cabal", 4.8683, -75.6214, "Pereira", ["santa rosa de cabal"]),
   place("Manizales", 5.0703, -75.5138, "Manizales", ["manizales", "palermo", "la enea", "san marcel", "el bosque", "la florida"]),
+  place("Fátima", 5.05255, -75.49648, "Manizales", ["fatima", "barrio fatima"]),
   place("Villamaría", 5.0456, -75.5153, "Manizales", ["villamaria", "urapanes", "ciudad jardin villamaria", "mirador de las lomas", "mirador de betania"]),
   place("Chinchiná", 4.9825, -75.6056, "Manizales", ["chinchina"]),
   place("Armenia", 4.535, -75.6757, "Armenia", ["armenia"]),
@@ -154,6 +155,8 @@ export function estimateReportPoint(report: {
     if (!sameCity) continue;
     for (const alias of p.aliases) {
       if (!aliasInText(alias, hay)) continue;
+      // El nombre de la ciudad siempre está en el texto; no debe ganar al barrio.
+      if (alias === cityNorm) continue;
       // Evitar que "cali" gane sobre "yumbo" si ambos aparecen
       const aliasLen = alias.length;
       if (!best || aliasLen > best.aliasLen) best = { place: p, aliasLen };

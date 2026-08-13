@@ -1,5 +1,6 @@
 import {
   estimateReportPoint,
+  GEO_PLACES,
   getCityPoint,
   haversineKm,
   normalizeGeoText,
@@ -9,7 +10,7 @@ import type { PetReport } from "@/lib/types";
 
 const PHOTON = "https://photon.komoot.io/api";
 const NOMINATIM =
-  "https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&countrycodes=co";
+  "https://nominatim.openstreetmap.org/search?format=jsonv2&limit=5&addressdetails=1&countrycodes=co";
 
 const DEPT: Record<string, string> = {
   Bogotá: "Cundinamarca",
@@ -83,7 +84,58 @@ const ZONE_STOP = new Set([
   "no",
 ]);
 
+/** Palabras que solas enganchan otro municipio (Tres Esquinas → Murillo). */
+const WEAK_ZONE = new Set([
+  "tres",
+  "cuatro",
+  "norte",
+  "sur",
+  "este",
+  "oeste",
+  "alto",
+  "baja",
+  "bajo",
+  "centro",
+  "nuevo",
+  "nueva",
+  "esquina",
+  "esquinas",
+  "parte",
+  "lado",
+]);
+
+const NEIGHBORHOOD_KINDS = new Set([
+  "neighbourhood",
+  "neighborhood",
+  "suburb",
+  "quarter",
+  "locality",
+  "district",
+  "hamlet",
+  "village",
+]);
+
+const STREET_KINDS = new Set([
+  "street",
+  "highway",
+  "primary",
+  "secondary",
+  "residential",
+  "unclassified",
+  "road",
+]);
+
+/** Más allá de esto no es un barrio de la ciudad (Murillo queda ~40 km). */
+const MAX_ZONE_KM = 28;
+
 const memory = new Map<string, GeoPoint>();
+
+type GeocodeHit = GeoPoint & {
+  name?: string;
+  city?: string;
+  state?: string;
+  kind?: string;
+};
 
 export function zoneKey(city: string, neighborhood: string): string {
   return `${normalizeGeoText(city)}|${normalizeGeoText(neighborhood)}`;
@@ -103,13 +155,67 @@ export function zoneSearchText(neighborhood: string): string {
   return tokens.join(" ").trim();
 }
 
-function isNearCity(point: GeoPoint, city: string, maxKm = 55): boolean {
+function isNearCity(point: GeoPoint, city: string, maxKm = MAX_ZONE_KM): boolean {
   const c = getCityPoint(city);
-  if (!c) return isFinite(point.lat);
+  if (!c) return Number.isFinite(point.lat);
   return haversineKm(point, c) <= maxKm;
 }
 
-/** Coords guardadas que son solo el centro de la ciudad: no sirven como zona. */
+function cityMatches(hitCity: string | undefined, requested: string): boolean {
+  if (!hitCity) return false;
+  const a = normalizeGeoText(hitCity);
+  const b = normalizeGeoText(requested);
+  if (!a || !b) return false;
+  if (a === b || a.includes(b) || b.includes(a)) return true;
+  return GEO_PLACES.some(
+    (p) =>
+      Boolean(p.city) &&
+      normalizeGeoText(p.name) === a &&
+      normalizeGeoText(p.city as string) === b,
+  );
+}
+
+function stateMatches(hitState: string | undefined, requestedCity: string): boolean {
+  if (!hitState) return true;
+  const want = normalizeGeoText(DEPT[requestedCity] || "");
+  if (!want) return true;
+  const got = normalizeGeoText(hitState);
+  return got.includes(want) || want.includes(got);
+}
+
+function acceptHit(hit: GeocodeHit, city: string): boolean {
+  if (!isNearCity(hit, city)) return false;
+  if (hit.state && !stateMatches(hit.state, city) && !cityMatches(hit.city, city)) {
+    return false;
+  }
+  if (hit.city && !cityMatches(hit.city, city)) return false;
+  return true;
+}
+
+function scoreHit(hit: GeocodeHit, city: string): number | null {
+  if (!acceptHit(hit, city)) return null;
+  let score = 0;
+  if (cityMatches(hit.city, city)) score += 50;
+  if (stateMatches(hit.state, city)) score += 15;
+  const kind = normalizeGeoText(hit.kind || "");
+  if (NEIGHBORHOOD_KINDS.has(kind)) score += 25;
+  if (STREET_KINDS.has(kind)) score -= 25;
+  const cityPt = getCityPoint(city);
+  if (cityPt) score += Math.max(0, 18 - haversineKm(hit, cityPt));
+  return score;
+}
+
+function pickBest(hits: GeocodeHit[], city: string): GeoPoint | null {
+  let best: { hit: GeocodeHit; score: number } | null = null;
+  for (const hit of hits) {
+    const score = scoreHit(hit, city);
+    if (score == null) continue;
+    if (!best || score > best.score) best = { hit, score };
+  }
+  return best ? { lat: best.hit.lat, lng: best.hit.lng } : null;
+}
+
+/** Coords guardadas que no sirven: centro de ciudad o otro municipio. */
 export function storedCoordsAreCityOnly(report: {
   city: string;
   lat?: number | null;
@@ -120,16 +226,14 @@ export function storedCoordsAreCityOnly(report: {
   }
   const city = getCityPoint(report.city);
   if (!city) return false;
-  return haversineKm({ lat: report.lat, lng: report.lng }, city) < 0.8;
+  const km = haversineKm({ lat: report.lat, lng: report.lng }, city);
+  return km < 0.8 || km > MAX_ZONE_KM;
 }
 
-async function photonSearch(
-  query: string,
-  bias: GeoPoint | null,
-): Promise<GeoPoint | null> {
+async function photonSearch(query: string, bias: GeoPoint | null): Promise<GeocodeHit[]> {
   const url = new URL(PHOTON);
   url.searchParams.set("q", query);
-  url.searchParams.set("limit", "3");
+  url.searchParams.set("limit", "8");
   if (bias) {
     url.searchParams.set("lat", String(bias.lat));
     url.searchParams.set("lon", String(bias.lng));
@@ -144,26 +248,49 @@ async function photonSearch(
         "User-Agent":
           "UbicaTuPeludo/1.0 (https://encuentratupeludo.vercel.app)",
       },
-      cache: "force-cache",
+      cache: "no-store",
     });
-    if (!res.ok) return null;
+    if (!res.ok) return [];
     const data = (await res.json()) as {
-      features?: Array<{ geometry?: { coordinates?: number[] } }>;
+      features?: Array<{
+        geometry?: { coordinates?: number[] };
+        properties?: {
+          name?: string;
+          city?: string;
+          locality?: string;
+          county?: string;
+          state?: string;
+          osm_value?: string;
+          type?: string;
+        };
+      }>;
     };
-    const coords = data.features?.[0]?.geometry?.coordinates;
-    if (!coords || coords.length < 2) return null;
-    const lng = Number(coords[0]);
-    const lat = Number(coords[1]);
-    if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
-    return { lat, lng };
+    const hits: GeocodeHit[] = [];
+    for (const feature of data.features || []) {
+      const coords = feature.geometry?.coordinates;
+      if (!coords || coords.length < 2) continue;
+      const lng = Number(coords[0]);
+      const lat = Number(coords[1]);
+      if (!Number.isFinite(lat) || !Number.isFinite(lng)) continue;
+      const props = feature.properties || {};
+      hits.push({
+        lat,
+        lng,
+        name: props.name,
+        city: props.city || props.locality || props.county,
+        state: props.state,
+        kind: props.osm_value || props.type,
+      });
+    }
+    return hits;
   } catch {
-    return null;
+    return [];
   } finally {
     clearTimeout(timer);
   }
 }
 
-async function nominatimSearch(query: string): Promise<GeoPoint | null> {
+async function nominatimSearch(query: string): Promise<GeocodeHit[]> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 2500);
   try {
@@ -174,21 +301,72 @@ async function nominatimSearch(query: string): Promise<GeoPoint | null> {
         "User-Agent":
           "UbicaTuPeludo/1.0 (https://encuentratupeludo.vercel.app)",
       },
-      cache: "force-cache",
+      cache: "no-store",
     });
-    if (!res.ok) return null;
-    const data = (await res.json()) as Array<{ lat: string; lon: string }>;
-    const hit = data[0];
-    if (!hit) return null;
-    const lat = Number(hit.lat);
-    const lng = Number(hit.lon);
-    if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
-    return { lat, lng };
+    if (!res.ok) return [];
+    const data = (await res.json()) as Array<{
+      lat: string;
+      lon: string;
+      name?: string;
+      type?: string;
+      class?: string;
+      address?: {
+        city?: string;
+        town?: string;
+        municipality?: string;
+        village?: string;
+        neighbourhood?: string;
+        suburb?: string;
+        state?: string;
+      };
+    }>;
+    const hits: GeocodeHit[] = [];
+    for (const row of data) {
+      const lat = Number(row.lat);
+      const lng = Number(row.lon);
+      if (!Number.isFinite(lat) || !Number.isFinite(lng)) continue;
+      const addr = row.address || {};
+      hits.push({
+        lat,
+        lng,
+        name: row.name,
+        city:
+          addr.city ||
+          addr.town ||
+          addr.municipality ||
+          addr.village ||
+          addr.suburb,
+        state: addr.state,
+        kind: row.type || row.class,
+      });
+    }
+    return hits;
   } catch {
-    return null;
+    return [];
   } finally {
     clearTimeout(timer);
   }
+}
+
+function zoneQueries(city: string, neighborhood: string, dept: string): string[] {
+  const zone = zoneSearchText(neighborhood);
+  const tokens = zone.split(" ").filter(Boolean);
+  const distinctive = tokens.filter((t) => t.length >= 5 && !WEAK_ZONE.has(t));
+  const queries: string[] = [];
+
+  for (const token of distinctive) {
+    queries.push(`${token}, ${city}, ${dept}, Colombia`);
+    queries.push(`barrio ${token}, ${city}, Colombia`);
+  }
+  if (zone) {
+    queries.push(`${zone}, ${city}, ${dept}, Colombia`);
+    queries.push(`${zone}, ${city}, Colombia`);
+  }
+  queries.push(`${neighborhood}, ${city}, Colombia`);
+
+  return queries.filter(
+    (q, i, arr) => q.replace(/\s+/g, " ").trim().length >= 8 && arr.indexOf(q) === i,
+  );
 }
 
 /**
@@ -205,19 +383,13 @@ export async function geocodeReportPlace(
 
   const estimated = estimateReportPoint({ city, neighborhood });
   const cityPoint = getCityPoint(city) ?? estimated.point;
-  const zone = zoneSearchText(neighborhood);
   const dept = DEPT[city] || "Colombia";
 
-  const queries = [
-    zone ? `${zone}, ${city}, ${dept}, Colombia` : "",
-    zone ? `${zone}, ${city}, Colombia` : "",
-    `${neighborhood}, ${city}, Colombia`,
-  ].filter((q, i, arr) => q.length >= 8 && arr.indexOf(q) === i);
-
-  for (const q of queries) {
+  for (const q of zoneQueries(city, neighborhood, dept)) {
     const hit =
-      (await photonSearch(q, cityPoint)) || (await nominatimSearch(q));
-    if (hit && isNearCity(hit, city)) {
+      pickBest(await photonSearch(q, cityPoint), city) ||
+      pickBest(await nominatimSearch(q), city);
+    if (hit) {
       memory.set(key, hit);
       return hit;
     }
