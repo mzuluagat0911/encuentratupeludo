@@ -10,6 +10,7 @@ import { listReports, usingLocalStore } from "@/lib/reports";
 import { countFeedReports } from "@/lib/rescueOps";
 import { hubsForFeedBanner } from "@/lib/hubs";
 import { CityHelpBanner } from "@/components/CityHelpBanner";
+import { NearbyMap } from "@/components/NearbyMap";
 import type { PetType, ReportType } from "@/lib/types";
 import {
   isValidLatLng,
@@ -94,6 +95,12 @@ export default async function HomePage({ searchParams }: PageProps<"/">) {
           >
             <FeedFilters />
           </Suspense>
+
+          {nearMe && reports.length > 0 ? (
+            <div className="mt-5">
+              <NearbyMap origin={nearMe} reports={reports} />
+            </div>
+          ) : null}
 
           <div className="mt-5 grid gap-4">
             {reports.length === 0 ? (

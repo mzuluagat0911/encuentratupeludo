@@ -126,6 +126,8 @@ function applyFilters(reports: PetReport[], filters: ReportFilters): PetReport[]
       const est = estimateReportPoint(r);
       return {
         ...r,
+        lat: r.lat ?? est.point.lat,
+        lng: r.lng ?? est.point.lng,
         distance_km: haversineKm(origin, est.point),
         geo_precision: r.lat != null && r.lng != null ? "gps" : est.precision,
       } satisfies PetReport;

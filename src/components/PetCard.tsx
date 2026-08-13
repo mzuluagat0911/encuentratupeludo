@@ -32,7 +32,10 @@ export function PetCard({ report }: Props) {
   const href = reportPath(report.id);
 
   return (
-    <article className="overflow-hidden rounded-3xl border border-line bg-card shadow-[0_8px_24px_-16px_rgba(26,46,40,0.35)]">
+    <article
+      id={`reporte-${report.id}`}
+      className="scroll-mt-24 overflow-hidden rounded-3xl border border-line bg-card shadow-[0_8px_24px_-16px_rgba(26,46,40,0.35)]"
+    >
       <Link href={href} className="block">
         <div className="relative aspect-[4/3] overflow-hidden bg-gradient-to-br from-[#e8f4ef] to-[#f3ebe3]">
           {report.photo_url ? (
