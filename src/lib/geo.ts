@@ -12,6 +12,8 @@ export type GeoPlace = GeoPoint & {
 /** Radio por defecto: cubre área metropolitana (Yumbo–Cali, Villamaría–Manizales). */
 export const NEAR_RADIUS_KM = 50;
 export const NEAR_FALLBACK_KM = 120;
+/** Un barrio no puede quedar a más de esto del centro (Murillo ~40 km). */
+export const MAX_ZONE_KM = 28;
 
 export type NearRadius = 3 | 5 | typeof NEAR_RADIUS_KM;
 
@@ -65,8 +67,38 @@ export const GEO_PLACES: GeoPlace[] = [
   place("Pereira", 4.8143, -75.6946, "Pereira", ["pereira", "cuba", "poblado pereira"]),
   place("Dosquebradas", 4.8394, -75.6673, "Pereira", ["dosquebradas", "milan", "alamos"]),
   place("Santa Rosa de Cabal", 4.8683, -75.6214, "Pereira", ["santa rosa de cabal"]),
-  place("Manizales", 5.0703, -75.5138, "Manizales", ["manizales", "palermo", "la enea", "san marcel", "el bosque", "la florida"]),
+  place("Manizales", 5.0703, -75.5138, "Manizales", ["manizales"]),
   place("Fátima", 5.05255, -75.49648, "Manizales", ["fatima", "barrio fatima"]),
+  place("Palermo", 5.05144, -75.48864, "Manizales", ["palermo", "bajo palermo"]),
+  place("Palogrande", 5.05213, -75.48744, "Manizales", ["palogrande"]),
+  place("Universitaria", 5.05025, -75.50182, "Manizales", ["universitaria", "comuna universitaria"]),
+  place("La Enea", 5.03182, -75.46306, "Manizales", ["la enea", "enea"]),
+  place("San Marcel", 5.03566, -75.46963, "Manizales", ["san marcel"]),
+  place("El Bosque", 5.06409, -75.52287, "Manizales", ["el bosque"]),
+  place("La Fuente", 5.06017, -75.50966, "Manizales", ["la fuente"]),
+  place("La Macarena", 5.06084, -75.52257, "Manizales", ["la macarena"]),
+  place("San José", 5.07363, -75.51386, "Manizales", ["san jose"]),
+  place("Cerro de Oro", 5.05857, -75.47594, "Manizales", ["cerro de oro"]),
+  place("Betania", 5.05538, -75.49744, "Manizales", ["betania"]),
+  place("Milán", 5.0459, -75.47986, "Manizales", ["milan"]),
+  place("Los Alcázares", 5.06711, -75.52676, "Manizales", ["alcazares", "los alcazares"]),
+  place("Chipre", 5.07584, -75.52544, "Manizales", ["chipre"]),
+  place("La Estrella", 5.05944, -75.48941, "Manizales", ["la estrella"]),
+  place("El Cable", 5.05634, -75.48642, "Manizales", ["el cable"]),
+  place("Versalles", 5.06315, -75.49881, "Manizales", ["versalles"]),
+  place("La Sultana", 5.06108, -75.47277, "Manizales", ["la sultana"]),
+  place("Avanzada", 5.07674, -75.51377, "Manizales", ["la avanzada", "avanzada"]),
+  place("Nuevo Horizonte", 5.07135, -75.48771, "Manizales", ["nuevo horizonte"]),
+  place("Cervantes", 5.06341, -75.50948, "Manizales", ["cervantes"]),
+  place("Cumanday", 5.06762, -75.51497, "Manizales", ["cumanday"]),
+  place("La Carola", 5.06619, -75.48766, "Manizales", ["la carola"]),
+  place("El Nevado", 5.06015, -75.51446, "Manizales", ["el nevado"]),
+  place("Los Rosales", 5.06209, -75.48975, "Manizales", ["los rosales"]),
+  place("Minitas", 5.06338, -75.47564, "Manizales", ["minitas"]),
+  place("San Jorge", 5.06583, -75.49946, "Manizales", ["san jorge"]),
+  place("La Francia", 5.06829, -75.53268, "Manizales", ["la francia"]),
+  place("Tesorito", 5.03591, -75.45055, "Manizales", ["tesorito"]),
+  place("La Linda", 5.09178, -75.54614, "Manizales", ["la linda"]),
   place("Villamaría", 5.0456, -75.5153, "Manizales", ["villamaria", "urapanes", "ciudad jardin villamaria", "mirador de las lomas", "mirador de betania"]),
   place("Chinchiná", 4.9825, -75.6056, "Manizales", ["chinchina"]),
   place("Armenia", 4.535, -75.6757, "Armenia", ["armenia"]),
@@ -91,7 +123,9 @@ export const GEO_PLACES: GeoPlace[] = [
 
 const CITY_CENTROIDS = new Map<string, GeoPoint>();
 for (const city of COLOMBIA_CITIES) {
-  const p = GEO_PLACES.find((x) => x.name === city || x.city === city);
+  const p =
+    GEO_PLACES.find((x) => x.name === city) ??
+    GEO_PLACES.find((x) => x.city === city);
   if (p) CITY_CENTROIDS.set(city, { lat: p.lat, lng: p.lng });
 }
 
@@ -124,6 +158,34 @@ function aliasInText(alias: string, haystack: string): boolean {
   );
 }
 
+function hashString(value: string): number {
+  let h = 2166136261;
+  for (let i = 0; i < value.length; i++) {
+    h ^= value.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return h >>> 0;
+}
+
+/** Mismo barrio → mismo punto alrededor de la ciudad. Sin APIs. */
+export function stableNeighborhoodPoint(
+  city: string,
+  neighborhood: string,
+): GeoPoint | null {
+  const centroid = CITY_CENTROIDS.get(city);
+  if (!centroid) return null;
+  const zone = normalizeGeoText(neighborhood);
+  if (!zone) return centroid;
+  const h = hashString(zone);
+  const angle = ((h % 360) * Math.PI) / 180;
+  const ringKm = 0.75 + (h % 110) / 100;
+  const dLat = (ringKm / 111.32) * Math.cos(angle);
+  const dLng =
+    (ringKm / (111.32 * Math.cos((centroid.lat * Math.PI) / 180))) *
+    Math.sin(angle);
+  return { lat: centroid.lat + dLat, lng: centroid.lng + dLng };
+}
+
 /** Mejor lugar conocido a partir de ciudad + barrio (sin llamar APIs). */
 export function estimateReportPoint(report: {
   city: string;
@@ -139,8 +201,9 @@ export function estimateReportPoint(report: {
   ) {
     const city = CITY_CENTROIDS.get(report.city);
     const stored = { lat: report.lat, lng: report.lng };
-    // Si es el centro de la ciudad, ignorar: hay que usar la zona.
-    if (!city || haversineKm(stored, city) >= 0.8) {
+    const km = city ? haversineKm(stored, city) : 0;
+    // Centro de ciudad o otro municipio: no usar.
+    if (!city || (km >= 0.8 && km <= MAX_ZONE_KM)) {
       return { point: stored, precision: "gps" };
     }
   }
@@ -151,27 +214,34 @@ export function estimateReportPoint(report: {
   let best: { place: GeoPlace; aliasLen: number } | null = null;
   for (const p of GEO_PLACES) {
     const sameCity =
-      !p.city || normalizeGeoText(p.city) === cityNorm || normalizeGeoText(p.name) === cityNorm;
+      !p.city ||
+      normalizeGeoText(p.city) === cityNorm ||
+      normalizeGeoText(p.name) === cityNorm;
     if (!sameCity) continue;
     for (const alias of p.aliases) {
       if (!aliasInText(alias, hay)) continue;
       // El nombre de la ciudad siempre está en el texto; no debe ganar al barrio.
       if (alias === cityNorm) continue;
-      // Evitar que "cali" gane sobre "yumbo" si ambos aparecen
       const aliasLen = alias.length;
       if (!best || aliasLen > best.aliasLen) best = { place: p, aliasLen };
     }
   }
 
   if (best && best.place.name !== report.city && best.aliasLen >= 4) {
-    return { point: { lat: best.place.lat, lng: best.place.lng }, precision: "place" };
+    return {
+      point: { lat: best.place.lat, lng: best.place.lng },
+      precision: "place",
+    };
   }
 
-  const centroid = CITY_CENTROIDS.get(report.city as (typeof COLOMBIA_CITIES)[number]);
-  if (centroid) return { point: centroid, precision: "city" };
+  const hashed = stableNeighborhoodPoint(report.city, report.neighborhood);
+  if (hashed) return { point: hashed, precision: "place" };
 
   if (best) {
-    return { point: { lat: best.place.lat, lng: best.place.lng }, precision: "city" };
+    return {
+      point: { lat: best.place.lat, lng: best.place.lng },
+      precision: "city",
+    };
   }
 
   return { point: { lat: 4.5709, lng: -74.2973 }, precision: "city" };

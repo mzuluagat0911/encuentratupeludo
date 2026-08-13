@@ -22,10 +22,8 @@ import {
   NEAR_RADIUS_KM,
 } from "@/lib/geo";
 import {
-  geocodeReportZones,
   spreadOverlappingPins,
   storedCoordsAreCityOnly,
-  zoneKey,
 } from "@/lib/geocode";
 
 const DATA_DIR = path.join(process.cwd(), ".data");
@@ -145,39 +143,21 @@ async function applyFilters(
     return haversineKm(origin, city) <= NEAR_FALLBACK_KM;
   });
 
-  // No bloquear “Permitir”: si Photon tarda, usamos ciudad/zona local.
-  let zones = new Map<string, { lat: number; lng: number }>();
-  try {
-    zones = await Promise.race([
-      geocodeReportZones(metro),
-      new Promise<Map<string, { lat: number; lng: number }>>((resolve) => {
-        setTimeout(() => resolve(new Map()), 2800);
-      }),
-    ]);
-  } catch {
-    zones = new Map();
-  }
-
+  // Sin Photon en el feed: mismo barrio = mismo punto, siempre.
   const ranked = metro
     .map((r) => {
-      const z = zones.get(zoneKey(r.city, r.neighborhood));
       const ignoreStored = storedCoordsAreCityOnly(r);
       const est = estimateReportPoint({
         ...r,
         lat: ignoreStored ? null : r.lat,
         lng: ignoreStored ? null : r.lng,
       });
-      const point = z ?? est.point;
       return {
         ...r,
-        lat: point.lat,
-        lng: point.lng,
-        distance_km: haversineKm(origin, point),
-        geo_precision: ignoreStored
-          ? z
-            ? "place"
-            : est.precision
-          : "gps",
+        lat: est.point.lat,
+        lng: est.point.lng,
+        distance_km: haversineKm(origin, est.point),
+        geo_precision: est.precision,
       } satisfies PetReport;
     })
     .sort((a, b) => {

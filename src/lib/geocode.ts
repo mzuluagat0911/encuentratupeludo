@@ -3,6 +3,7 @@ import {
   GEO_PLACES,
   getCityPoint,
   haversineKm,
+  MAX_ZONE_KM,
   normalizeGeoText,
   type GeoPoint,
 } from "@/lib/geo";
@@ -125,9 +126,6 @@ const STREET_KINDS = new Set([
   "road",
 ]);
 
-/** Más allá de esto no es un barrio de la ciudad (Murillo queda ~40 km). */
-const MAX_ZONE_KM = 28;
-
 const memory = new Map<string, GeoPoint>();
 
 type GeocodeHit = GeoPoint & {
@@ -248,7 +246,7 @@ async function photonSearch(query: string, bias: GeoPoint | null): Promise<Geoco
         "User-Agent":
           "UbicaTuPeludo/1.0 (https://encuentratupeludo.vercel.app)",
       },
-      cache: "no-store",
+      cache: "force-cache",
     });
     if (!res.ok) return [];
     const data = (await res.json()) as {
@@ -301,7 +299,7 @@ async function nominatimSearch(query: string): Promise<GeocodeHit[]> {
         "User-Agent":
           "UbicaTuPeludo/1.0 (https://encuentratupeludo.vercel.app)",
       },
-      cache: "no-store",
+      cache: "force-cache",
     });
     if (!res.ok) return [];
     const data = (await res.json()) as Array<{
@@ -435,31 +433,49 @@ export async function geocodeReportZones(
   return resolved;
 }
 
-/** Separa pines que cayeron en el mismo punto para que se vean todos. */
+/** Separa pines apilados. El ángulo depende del id, no del orden del feed. */
 export function spreadOverlappingPins(reports: PetReport[]): PetReport[] {
-  const groups = new Map<string, number[]>();
-  reports.forEach((r, i) => {
-    if (typeof r.lat !== "number" || typeof r.lng !== "number") return;
-    const k = `${r.lat.toFixed(4)},${r.lng.toFixed(4)}`;
-    const list = groups.get(k) || [];
-    list.push(i);
-    groups.set(k, list);
-  });
-
   const next = reports.map((r) => ({ ...r }));
-  for (const idxs of groups.values()) {
-    if (idxs.length < 2) continue;
-    const base = next[idxs[0]];
-    const lat0 = base.lat as number;
-    const lng0 = base.lng as number;
-    const ring = 0.0011; // ~120 m
-    idxs.forEach((idx, n) => {
-      const angle = (2 * Math.PI * n) / idxs.length;
-      const radius = ring * (1 + Math.floor(n / 8) * 0.35);
+  const used = new Set<number>();
+  const mergeKm = 0.2;
+  const ring = 0.0026;
+
+  for (let i = 0; i < next.length; i++) {
+    const a = next[i];
+    if (used.has(i) || typeof a.lat !== "number" || typeof a.lng !== "number") {
+      continue;
+    }
+    const group = [i];
+    used.add(i);
+    for (let j = i + 1; j < next.length; j++) {
+      const b = next[j];
+      if (used.has(j) || typeof b.lat !== "number" || typeof b.lng !== "number") {
+        continue;
+      }
+      if (
+        haversineKm(
+          { lat: a.lat, lng: a.lng },
+          { lat: b.lat, lng: b.lng },
+        ) <= mergeKm
+      ) {
+        group.push(j);
+        used.add(j);
+      }
+    }
+    if (group.length < 2) continue;
+    group.sort((x, y) => next[x].id.localeCompare(next[y].id));
+    const lat0 =
+      group.reduce((sum, idx) => sum + (next[idx].lat as number), 0) /
+      group.length;
+    const lng0 =
+      group.reduce((sum, idx) => sum + (next[idx].lng as number), 0) /
+      group.length;
+    group.forEach((idx, n) => {
+      const angle = (2 * Math.PI * n) / group.length;
       next[idx] = {
         ...next[idx],
-        lat: lat0 + Math.cos(angle) * radius,
-        lng: lng0 + Math.sin(angle) * radius,
+        lat: lat0 + Math.cos(angle) * ring,
+        lng: lng0 + Math.sin(angle) * ring,
       };
     });
   }
