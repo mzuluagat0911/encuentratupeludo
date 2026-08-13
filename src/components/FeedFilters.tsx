@@ -70,6 +70,67 @@ export function FeedFilters() {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- debounce only on local input
   }, [nombre, nombreParam]);
 
+  if (nearMe) {
+    return (
+      <div className="space-y-2">
+        <div
+          role="tablist"
+          aria-label="Tipo de reporte"
+          className="flex gap-1.5 overflow-x-auto pb-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        >
+          {TABS.filter((tab) => tab.value !== "encontrado").map((tab) => {
+            const on = tipo === tab.value;
+            const hrefParams = new URLSearchParams(searchParams.toString());
+            if (tab.value === "todas") hrefParams.delete("tipo");
+            else hrefParams.set("tipo", tab.value);
+            const href = hrefParams.toString()
+              ? `${pathname}?${hrefParams}`
+              : pathname;
+            return (
+              <Link
+                key={tab.value}
+                href={href}
+                scroll={false}
+                role="tab"
+                aria-selected={on}
+                className={`inline-flex h-9 shrink-0 items-center rounded-xl px-3 text-xs font-bold ${
+                  on
+                    ? tab.tone === "lost"
+                      ? "bg-lost text-white"
+                      : tab.tone === "rescued"
+                        ? "bg-rescued text-white"
+                        : "bg-foreground text-white"
+                    : "border border-line bg-white text-foreground"
+                }`}
+              >
+                {tab.label}
+              </Link>
+            );
+          })}
+        </div>
+        <div className="grid grid-cols-3 gap-1.5">
+          {PET_OPTIONS.map((opt) => {
+            const on = animal === opt.value;
+            return (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => update("animal", opt.value)}
+                className={`h-9 rounded-xl text-xs font-bold ${
+                  on
+                    ? "bg-primary text-white"
+                    : "border border-line bg-white text-foreground"
+                }`}
+              >
+                {opt.label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-3">
       <NearMeButton />

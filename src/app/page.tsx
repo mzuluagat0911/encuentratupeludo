@@ -78,45 +78,57 @@ export default async function HomePage({ searchParams }: PageProps<"/">) {
         seen={counts.encontrado}
       />
       <main className="flex-1 pb-24">
-        <HomeHero />
-        <CityHelpBanner hubs={helpHubs} />
-        <section id="reportes" className="mx-auto max-w-3xl px-4 py-6">
+        {nearMe ? null : <HomeHero />}
+        {nearMe ? null : <CityHelpBanner hubs={helpHubs} />}
+        <section
+          id="reportes"
+          className={`mx-auto max-w-3xl px-3 sm:px-4 ${nearMe ? "py-3" : "py-6"}`}
+        >
           {usingLocalStore() ? <LocalModeBanner /> : null}
 
-          <div className="mb-5">
-            <h2 className="font-[family-name:var(--font-display)] text-2xl font-semibold tracking-tight text-foreground">
-              {nearMe ? "Potencialmente cerca de ti" : "Reportes recientes"}
-            </h2>
-            <p className="mt-1 text-sm text-muted">
-              {nearMe
-                ? `Perdidos y rescatados ${
-                    radiusKm && radiusKm <= 5
-                      ? `a ${radiusKm} km a tu alrededor`
-                      : "potencialmente de tu lado"
-                  }. Zona: ${nearCity}. Sin vistos/encontrados.`
-                : "Permite ubicación para ver qué hay de tu lado, o filtra por ciudad."}
-            </p>
-          </div>
-
-          <Suspense
-            fallback={
-              <div className="h-28 animate-pulse rounded-3xl bg-white/60" />
-            }
-          >
-            <FeedFilters />
-          </Suspense>
-
-          {nearMe && reports.length > 0 ? (
-            <div className="mt-5">
-              <NearbyMap
-                origin={nearMe}
-                reports={reports}
-                radiusKm={radiusKm}
-              />
+          {nearMe ? (
+            <div className="mb-2">
+              <h2 className="font-[family-name:var(--font-display)] text-xl font-semibold tracking-tight text-foreground">
+                De tu lado
+                {nearCity ? (
+                  <span className="font-[family-name:var(--font-body)] text-sm font-medium text-muted">
+                    {" "}
+                    · {nearCity}
+                  </span>
+                ) : null}
+              </h2>
             </div>
+          ) : (
+            <div className="mb-5">
+              <h2 className="font-[family-name:var(--font-display)] text-2xl font-semibold tracking-tight text-foreground">
+                Reportes recientes
+              </h2>
+              <p className="mt-1 text-sm text-muted">
+                Permite ubicación para ver qué hay de tu lado, o filtra por
+                ciudad.
+              </p>
+            </div>
+          )}
+
+          {nearMe ? (
+            <NearbyMap
+              origin={nearMe}
+              reports={reports}
+              radiusKm={radiusKm}
+            />
           ) : null}
 
-          <div className="mt-5 grid gap-4">
+          <div className={nearMe ? "mt-3" : undefined}>
+            <Suspense
+              fallback={
+                <div className="h-16 animate-pulse rounded-2xl bg-white/60" />
+              }
+            >
+              <FeedFilters />
+            </Suspense>
+          </div>
+
+          <div className={`grid gap-4 ${nearMe ? "mt-3" : "mt-5"}`}>
             {reports.length === 0 ? (
               <EmptyState near={Boolean(nearMe)} />
             ) : (

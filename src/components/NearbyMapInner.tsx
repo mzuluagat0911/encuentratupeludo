@@ -6,6 +6,7 @@ import "leaflet/dist/leaflet.css";
 import type { PetReport } from "@/lib/types";
 import { formatDistanceKm } from "@/lib/geo";
 import { reportTypeLabel } from "@/lib/reportCopy";
+import { NearRadiusBar } from "@/components/NearRadiusBar";
 
 type Origin = { lat: number; lng: number };
 
@@ -114,25 +115,25 @@ export function NearbyMapInner({ origin, reports, radiusKm }: Props) {
 
   return (
     <div className="overflow-hidden rounded-3xl border border-line bg-white shadow-[0_8px_24px_-16px_rgba(26,46,40,0.35)]">
-      <div ref={hostRef} className="h-72 w-full sm:h-96" />
-      <p className="flex flex-wrap gap-x-3 gap-y-1 px-4 py-2.5 text-[11px] font-medium text-muted">
+      <div className="border-b border-line px-2.5 py-2">
+        <NearRadiusBar />
+      </div>
+      <div
+        ref={hostRef}
+        className="h-[min(42vh,280px)] w-full min-h-[220px] sm:h-80"
+      />
+      <p className="flex flex-wrap items-center gap-x-2.5 gap-y-1 px-3 py-2 text-[11px] font-medium text-muted">
         <span className="font-bold text-foreground">
-          {reports.length} peludos en el mapa
+          {reports.length} en el mapa
         </span>
-        <span className="inline-flex items-center gap-1.5">
-          <span className="h-2.5 w-2.5 rounded-full bg-primary" /> Tú
+        <span className="inline-flex items-center gap-1">
+          <span className="h-2 w-2 rounded-full bg-primary" /> Tú
         </span>
-        <span className="inline-flex items-center gap-1.5">
-          <span className="h-2.5 w-2.5 rounded-full bg-lost" /> Perdido
+        <span className="inline-flex items-center gap-1">
+          <span className="h-2 w-2 rounded-full bg-lost" /> Perdido
         </span>
-        <span className="inline-flex items-center gap-1.5">
-          <span className="h-2.5 w-2.5 rounded-full bg-found" /> Visto
-        </span>
-        <span className="inline-flex items-center gap-1.5">
-          <span className="h-2.5 w-2.5 rounded-full bg-rescued" /> Rescatado
-        </span>
-        <span className="w-full text-muted/80">
-          Cada punto es la zona/barrio del reporte, no el GPS del celular
+        <span className="inline-flex items-center gap-1">
+          <span className="h-2 w-2 rounded-full bg-rescued" /> Rescatado
         </span>
       </p>
     </div>
