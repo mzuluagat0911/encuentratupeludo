@@ -3,8 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { Loader2, MapPin } from "lucide-react";
+import { writeStoredNear } from "@/lib/nearNav";
 
-const COORDS_KEY = "ubicatupeludo.near";
 const SKIP_KEY = "ubicatupeludo.near.skip";
 
 function geoErrorMessage(err: GeolocationPositionError): string {
@@ -28,8 +28,8 @@ export function NearMeButton() {
   const active = Boolean(searchParams.get("lat") && searchParams.get("lng"));
 
   function goToNear(lat: number, lng: number) {
+    writeStoredNear({ lat, lng });
     try {
-      localStorage.setItem(COORDS_KEY, JSON.stringify({ lat, lng }));
       sessionStorage.removeItem(SKIP_KEY);
     } catch {
       /* ignore */

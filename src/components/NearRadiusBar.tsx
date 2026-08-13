@@ -2,6 +2,8 @@
 
 import { usePathname, useSearchParams } from "next/navigation";
 import { X } from "lucide-react";
+import { clearStoredNear, writeStoredNear } from "@/lib/nearNav";
+import { parseCoord } from "@/lib/geo";
 
 const OPTIONS = [
   { id: "todos", label: "Todos" },
@@ -18,11 +20,21 @@ export function NearRadiusBar() {
     const params = new URLSearchParams(searchParams.toString());
     if (next === "todos") params.delete("radio");
     else params.set("radio", next);
+    const lat = parseCoord(searchParams.get("lat") ?? undefined);
+    const lng = parseCoord(searchParams.get("lng") ?? undefined);
+    if (lat != null && lng != null) {
+      writeStoredNear({
+        lat,
+        lng,
+        radio: next === "3" || next === "5" ? Number(next) : undefined,
+      });
+    }
     const qs = params.toString();
     window.location.assign(qs ? `${pathname}?${qs}` : pathname);
   }
 
   function clearNear() {
+    clearStoredNear();
     const params = new URLSearchParams(searchParams.toString());
     params.delete("lat");
     params.delete("lng");

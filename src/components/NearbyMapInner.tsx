@@ -7,6 +7,7 @@ import type { PetReport } from "@/lib/types";
 import { formatDistanceKm } from "@/lib/geo";
 import { reportTypeLabel } from "@/lib/reportCopy";
 import { NearRadiusBar } from "@/components/NearRadiusBar";
+import { focusReportCard } from "@/components/ReportCardShell";
 
 type Origin = { lat: number; lng: number };
 
@@ -24,10 +25,37 @@ function escapeHtml(value: string): string {
     .replace(/"/g, "&quot;");
 }
 
+function safePhotoSrc(url: string | null | undefined): string | null {
+  if (!url) return null;
+  if (!/^https?:\/\//i.test(url) && !url.startsWith("/")) return null;
+  return escapeHtml(url);
+}
+
 function pinColor(type: PetReport["report_type"]): string {
   if (type === "perdido") return "#c2410c";
   if (type === "encontrado") return "#047857";
   return "#1d4ed8";
+}
+
+function pinPopupHtml(report: PetReport): string {
+  const title = `${report.pet_type === "gato" ? "Gato" : "Perro"} ${reportTypeLabel(report.report_type).toLowerCase()}`;
+  const dist =
+    typeof report.distance_km === "number"
+      ? `a ~${formatDistanceKm(report.distance_km)}`
+      : escapeHtml(report.neighborhood);
+  const src = safePhotoSrc(report.photo_url);
+  const media = src
+    ? `<img src="${src}" alt="" width="72" height="72" />`
+    : `<span class="near-pin-ph">${report.pet_type === "gato" ? "🐱" : "🐶"}</span>`;
+
+  return `<button type="button" class="near-pin" data-focus-report="${escapeHtml(report.id)}">
+    ${media}
+    <span class="near-pin-copy">
+      <strong>${escapeHtml(title)}</strong>
+      <span>${escapeHtml(dist)}</span>
+      <span class="near-pin-ver">Ver</span>
+    </span>
+  </button>`;
 }
 
 export function NearbyMapInner({ origin, reports, radiusKm }: Props) {
@@ -78,22 +106,34 @@ export function NearbyMapInner({ origin, reports, radiusKm }: Props) {
       const lat = r.lat as number;
       const lng = r.lng as number;
       bounds.extend([lat, lng]);
-      const dist =
-        typeof r.distance_km === "number"
-          ? ` · a ~${formatDistanceKm(r.distance_km)}`
-          : "";
-      const title = `${r.pet_type === "gato" ? "Gato" : "Perro"} ${reportTypeLabel(r.report_type).toLowerCase()}`;
-      L.circleMarker([lat, lng], {
+      const marker = L.circleMarker([lat, lng], {
         radius: 10,
         color: "#ffffff",
         weight: 2,
         fillColor: pinColor(r.report_type),
         fillOpacity: 1,
       })
-        .bindPopup(
-          `<strong>${escapeHtml(title)}</strong><br/>${escapeHtml(r.neighborhood)} · ${escapeHtml(r.city)}${escapeHtml(dist)}<br/><a href="#reporte-${r.id}">Ver ficha</a>`,
-        )
+        .bindPopup(pinPopupHtml(r), {
+          className: "near-pin-popup",
+          maxWidth: 260,
+          minWidth: 210,
+          closeButton: true,
+        })
         .addTo(map);
+
+      marker.on("popupopen", (event) => {
+        const popupEl = event.popup.getElement();
+        const btn = popupEl?.querySelector<HTMLElement>("[data-focus-report]");
+        if (!btn) return;
+        L.DomEvent.disableClickPropagation(btn);
+        const onClick = (ev: Event) => {
+          ev.preventDefault();
+          L.DomEvent.stop(ev);
+          focusReportCard(r.id);
+          map.closePopup();
+        };
+        btn.addEventListener("click", onClick, { once: true });
+      });
     }
 
     if (bounds.isValid()) {

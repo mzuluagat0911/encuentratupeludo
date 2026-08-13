@@ -13,28 +13,30 @@ import { formatRelativeDate } from "@/lib/format";
 import { formatDistanceKm } from "@/lib/geo";
 import { buildWhatsAppUrl, whatsappButtonLabel } from "@/lib/whatsapp";
 import { isDemoReport } from "@/lib/demos";
-import { reportPath } from "@/lib/site";
+import { reportHrefWithNear } from "@/lib/nearNav";
 import {
   reportTypeBadgeClass,
   reportTypeLabel,
 } from "@/lib/reportCopy";
 import { ShareReportButton } from "@/components/ShareReportButton";
+import { ReportCardShell } from "@/components/ReportCardShell";
 
 type Props = {
   report: PetReport;
+  nearQuery?: string;
 };
 
-export function PetCard({ report }: Props) {
+export function PetCard({ report, nearQuery }: Props) {
   const isRescued = report.report_type === "rescatado";
   const isDemo = isDemoReport(report.description);
   const PetIcon = report.pet_type === "perro" ? Dog : Cat;
   const wa = buildWhatsAppUrl(report);
-  const href = reportPath(report.id);
+  const href = reportHrefWithNear(report.id, nearQuery);
 
   return (
-    <article
-      id={`reporte-${report.id}`}
-      className="scroll-mt-24 overflow-hidden rounded-3xl border border-line bg-card shadow-[0_8px_24px_-16px_rgba(26,46,40,0.35)]"
+    <ReportCardShell
+      id={report.id}
+      className="overflow-hidden rounded-3xl border border-line bg-card shadow-[0_8px_24px_-16px_rgba(26,46,40,0.35)]"
     >
       <Link href={href} className="block">
         <div className="relative aspect-[4/3] overflow-hidden bg-gradient-to-br from-[#e8f4ef] to-[#f3ebe3]">
@@ -152,6 +154,6 @@ export function PetCard({ report }: Props) {
           </>
         )}
       </div>
-    </article>
+    </ReportCardShell>
   );
 }

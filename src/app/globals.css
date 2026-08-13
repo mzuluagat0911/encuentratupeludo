@@ -92,3 +92,90 @@ body {
 .tap-target {
   min-height: 48px;
 }
+
+@keyframes report-focus-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.55);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(15, 118, 110, 0.18);
+  }
+}
+
+.report-card-focus {
+  animation: report-focus-pulse 0.85s ease-in-out 3;
+  outline: 3px solid var(--primary);
+  outline-offset: 3px;
+}
+
+.near-pin-popup .leaflet-popup-content-wrapper {
+  border-radius: 16px;
+  padding: 0;
+  overflow: hidden;
+}
+
+.near-pin-popup .leaflet-popup-content {
+  margin: 8px;
+  width: auto !important;
+}
+
+.near-pin {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 210px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.near-pin img,
+.near-pin-ph {
+  width: 72px;
+  height: 72px;
+  flex-shrink: 0;
+  border-radius: 12px;
+  object-fit: cover;
+  background: #e8f4ef;
+}
+
+.near-pin-ph {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+}
+
+.near-pin-copy {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.near-pin-copy strong {
+  font-size: 13px;
+  line-height: 1.25;
+  color: #1a2e28;
+}
+
+.near-pin-copy span {
+  font-size: 12px;
+  color: #5a736a;
+}
+
+.near-pin-ver {
+  margin-top: 4px;
+  display: inline-flex;
+  width: fit-content;
+  border-radius: 8px;
+  background: #0f766e;
+  padding: 4px 10px;
+  font-size: 12px !important;
+  font-weight: 700;
+  color: #fff !important;
+}

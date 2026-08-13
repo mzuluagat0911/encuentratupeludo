@@ -3,7 +3,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
-  ArrowLeft,
   Cat,
   Dog,
   HeartHandshake,
@@ -13,7 +12,10 @@ import {
 } from "lucide-react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { ShareReportButton } from "@/components/ShareReportButton";
-import { DownloadOgImageButton } from "@/components/DownloadOgImageButton";
+import {
+  BackToFeedLink,
+  NearAwareFeedLink,
+} from "@/components/BackToFeedLink";
 import { getReportById } from "@/lib/reports";
 import {
   reportShareDescription,
@@ -21,12 +23,14 @@ import {
   reportTypeBadgeClass,
   reportTypeLabel,
 } from "@/lib/reportCopy";
-import { getSiteUrl, reportAbsoluteUrl, reportPath } from "@/lib/site";
+import { getSiteUrl, reportAbsoluteUrl } from "@/lib/site";
 import { formatRelativeDate } from "@/lib/format";
 import { buildWhatsAppUrl, whatsappButtonLabel } from "@/lib/whatsapp";
+import { feedHrefFromParams } from "@/lib/nearNav";
 
 type PageParams = {
   params: Promise<{ id: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
 
 export async function generateMetadata({
@@ -74,27 +78,29 @@ export async function generateMetadata({
   };
 }
 
-export default async function ReportePage({ params }: PageParams) {
+export default async function ReportePage({
+  params,
+  searchParams,
+}: PageParams) {
   const { id } = await params;
+  const query = await searchParams;
   const report = await getReportById(id);
   if (!report) notFound();
 
   const isRescued = report.report_type === "rescatado";
   const PetIcon = report.pet_type === "perro" ? Dog : Cat;
   const wa = buildWhatsAppUrl(report);
-  const sharePath = reportPath(report.id);
+  const feedHref = feedHrefFromParams({
+    lat: typeof query.lat === "string" ? query.lat : undefined,
+    lng: typeof query.lng === "string" ? query.lng : undefined,
+    radio: typeof query.radio === "string" ? query.radio : undefined,
+  });
 
   return (
     <>
       <SiteHeader />
       <main className="mx-auto w-full max-w-xl flex-1 px-4 py-6 pb-20">
-        <Link
-          href="/"
-          className="mb-4 inline-flex items-center gap-1.5 text-sm font-semibold text-muted transition hover:text-foreground"
-        >
-          <ArrowLeft className="h-4 w-4" aria-hidden />
-          Volver al feed
-        </Link>
+        <BackToFeedLink href={feedHref} />
 
         <article className="overflow-hidden rounded-3xl border border-line bg-card shadow-[0_8px_24px_-16px_rgba(26,46,40,0.35)]">
           <div className="relative aspect-[4/3] overflow-hidden bg-gradient-to-br from-[#e8f4ef] to-[#f3ebe3]">
@@ -180,17 +186,6 @@ export default async function ReportePage({ params }: PageParams) {
             </p>
 
             <div className="space-y-3 pt-1">
-              <ShareReportButton
-                report={report}
-                variant="primary"
-                label="Compartir este reporte"
-              />
-              <DownloadOgImageButton reportId={report.id} />
-              <p className="text-center text-xs leading-relaxed text-muted">
-                En Meta Ads sube esa imagen en el creativo del anuncio. El
-                preview del enlace solo no basta para pautar.
-              </p>
-
               {isRescued ? (
                 <div className="tap-target flex w-full items-center justify-center gap-2 rounded-2xl bg-rescued-soft px-4 py-3.5 text-sm font-bold text-rescued">
                   <HeartHandshake className="h-5 w-5" aria-hidden />
@@ -207,15 +202,12 @@ export default async function ReportePage({ params }: PageParams) {
                   {whatsappButtonLabel(report.report_type)}
                 </a>
               )}
+              <ShareReportButton
+                report={report}
+                variant="primary"
+                label="Compartir este reporte"
+              />
             </div>
-
-            <p className="break-all rounded-xl bg-[#f3f7f4] px-3 py-2 text-center text-xs text-muted">
-              Link para pauta / compartir:{" "}
-              <span className="font-medium text-foreground">
-                {getSiteUrl()}
-                {sharePath}
-              </span>
-            </p>
           </div>
         </article>
 
@@ -228,9 +220,12 @@ export default async function ReportePage({ params }: PageParams) {
             Publica el tuyo
           </Link>{" "}
           o{" "}
-          <Link href="/" className="font-semibold text-primary hover:underline">
+          <NearAwareFeedLink
+            href={feedHref}
+            className="font-semibold text-primary hover:underline"
+          >
             sigue buscando
-          </Link>
+          </NearAwareFeedLink>
           .
         </p>
       </main>

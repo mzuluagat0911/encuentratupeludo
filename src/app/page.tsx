@@ -18,6 +18,7 @@ import {
   parseCoord,
   parseNearRadius,
 } from "@/lib/geo";
+import { nearSearchString } from "@/lib/nearNav";
 
 function parseTipo(value?: string): ReportType | "todas" {
   if (value === "perdido" || value === "encontrado" || value === "rescatado") {
@@ -69,6 +70,13 @@ export default async function HomePage({ searchParams }: PageProps<"/">) {
   });
   const counts = await countFeedReports();
   const helpHubs = hubsForFeedBanner(nearMe && nearCity ? nearCity : ciudad);
+  const nearQuery = nearMe
+    ? nearSearchString({
+        lat: nearMe.lat,
+        lng: nearMe.lng,
+        radio: radiusKm === 3 || radiusKm === 5 ? radiusKm : undefined,
+      })
+    : undefined;
 
   return (
     <>
@@ -133,7 +141,11 @@ export default async function HomePage({ searchParams }: PageProps<"/">) {
               <EmptyState near={Boolean(nearMe)} />
             ) : (
               reports.map((report) => (
-                <PetCard key={report.id} report={report} />
+                <PetCard
+                  key={report.id}
+                  report={report}
+                  nearQuery={nearQuery}
+                />
               ))
             )}
           </div>
