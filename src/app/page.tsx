@@ -59,7 +59,7 @@ export default async function HomePage({ searchParams }: PageProps<"/">) {
     : undefined;
 
   const reports = await listReports({
-    reportType: nearMe ? (tipo === "encontrado" ? "perdido" : tipo) : tipo,
+    reportType: nearMe ? "todas" : tipo,
     petType: animal,
     city: nearMe ? "todas" : ciudad,
     responsible: responsable || undefined,
@@ -118,7 +118,7 @@ export default async function HomePage({ searchParams }: PageProps<"/">) {
             />
           ) : null}
 
-          <div className={nearMe ? "mt-3" : undefined}>
+          {nearMe ? null : (
             <Suspense
               fallback={
                 <div className="h-16 animate-pulse rounded-2xl bg-white/60" />
@@ -126,7 +126,7 @@ export default async function HomePage({ searchParams }: PageProps<"/">) {
             >
               <FeedFilters />
             </Suspense>
-          </div>
+          )}
 
           <div className={`grid gap-4 ${nearMe ? "mt-3" : "mt-5"}`}>
             {reports.length === 0 ? (
