@@ -79,7 +79,7 @@ export function FeedFilters() {
         aria-label="Tipo de reporte"
         className="flex gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
-        {TABS.map((tab) => {
+        {TABS.filter((tab) => !(nearMe && tab.value === "encontrado")).map((tab) => {
           const active = tipo === tab.value;
           const hrefParams = new URLSearchParams(searchParams.toString());
           if (tab.value === "todas") hrefParams.delete("tipo");

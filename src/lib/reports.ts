@@ -113,6 +113,8 @@ function matchesBaseFilters(
     if (r.city !== filters.city) return false;
   }
   if (!matchesResponsibleName(r, filters.responsible)) return false;
+  // Cerca de mí: solo perdidos / rescatados (no “vistos/encontrados”)
+  if (origin && r.report_type === "encontrado") return false;
   return true;
 }
 
@@ -189,8 +191,10 @@ async function applyFilters(
 
   const radius = filters.radiusKm ?? NEAR_RADIUS_KM;
   const nearby = ranked.filter((r) => (r.distance_km ?? Infinity) <= radius);
-  const list =
-    nearby.length > 0
+  const strictRing = radius <= 5;
+  const list = strictRing
+    ? nearby
+    : nearby.length > 0
       ? nearby
       : ranked.filter((r) => (r.distance_km ?? Infinity) <= NEAR_FALLBACK_KM);
 

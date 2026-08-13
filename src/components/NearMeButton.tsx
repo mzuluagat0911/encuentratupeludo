@@ -99,16 +99,56 @@ export function NearMeButton() {
     }
   }, [active]);
 
+  const radio = searchParams.get("radio") || "todos";
+
+  function setRadio(next: "todos" | "3" | "5") {
+    const params = new URLSearchParams(searchParams.toString());
+    if (next === "todos") params.delete("radio");
+    else params.set("radio", next);
+    const qs = params.toString();
+    window.location.assign(qs ? `${pathname}?${qs}` : pathname);
+  }
+
   if (active) {
     return (
-      <button
-        type="button"
-        onClick={clearNear}
-        className="tap-target inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-primary px-4 py-3 text-sm font-bold text-white hover:bg-primary-dark"
-      >
-        <X className="h-4 w-4" aria-hidden />
-        Ver todos los reportes
-      </button>
+      <div className="space-y-2">
+        <p className="text-xs font-bold uppercase tracking-wide text-muted">
+          A mi alrededor
+        </p>
+        <div className="grid grid-cols-3 gap-2">
+          {(
+            [
+              { id: "todos", label: "Todos" },
+              { id: "3", label: "3 km" },
+              { id: "5", label: "5 km" },
+            ] as const
+          ).map((opt) => {
+            const on = radio === opt.id || (opt.id === "todos" && radio !== "3" && radio !== "5");
+            return (
+              <button
+                key={opt.id}
+                type="button"
+                onClick={() => setRadio(opt.id)}
+                className={`tap-target rounded-2xl px-2 py-2.5 text-sm font-bold transition ${
+                  on
+                    ? "bg-primary text-white"
+                    : "border border-line bg-white text-foreground hover:bg-white/80"
+                }`}
+              >
+                {opt.label}
+              </button>
+            );
+          })}
+        </div>
+        <button
+          type="button"
+          onClick={clearNear}
+          className="tap-target inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-line bg-white px-4 py-3 text-sm font-bold text-foreground hover:bg-white/80"
+        >
+          <X className="h-4 w-4" aria-hidden />
+          Salir de cerca de mí
+        </button>
+      </div>
     );
   }
 

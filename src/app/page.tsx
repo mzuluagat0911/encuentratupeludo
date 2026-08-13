@@ -14,9 +14,9 @@ import { NearbyMap } from "@/components/NearbyMap";
 import type { PetType, ReportType } from "@/lib/types";
 import {
   isValidLatLng,
-  NEAR_RADIUS_KM,
   nearestCityName,
   parseCoord,
+  parseNearRadius,
 } from "@/lib/geo";
 
 function parseTipo(value?: string): ReportType | "todas" {
@@ -52,14 +52,20 @@ export default async function HomePage({ searchParams }: PageProps<"/">) {
       ? { lat, lng }
       : null;
   const nearCity = nearMe ? nearestCityName(nearMe) : null;
+  const radiusKm = nearMe
+    ? parseNearRadius(
+        typeof params.radio === "string" ? params.radio : undefined,
+      )
+    : undefined;
 
   const reports = await listReports({
-    reportType: tipo,
+    reportType: nearMe ? (tipo === "encontrado" ? "perdido" : tipo) : tipo,
     petType: animal,
     city: nearMe ? "todas" : ciudad,
     responsible: responsable || undefined,
     lat: nearMe?.lat,
     lng: nearMe?.lng,
+    radiusKm,
   });
   const counts = await countFeedReports();
   const helpHubs = hubsForFeedBanner(nearMe && nearCity ? nearCity : ciudad);
@@ -83,7 +89,11 @@ export default async function HomePage({ searchParams }: PageProps<"/">) {
             </h2>
             <p className="mt-1 text-sm text-muted">
               {nearMe
-                ? `Lo que puede estar de tu lado (~${NEAR_RADIUS_KM} km). Zona: ${nearCity}. Distancia aproximada por ciudad y barrio.`
+                ? `Perdidos y rescatados ${
+                    radiusKm && radiusKm <= 5
+                      ? `a ${radiusKm} km a tu alrededor`
+                      : "potencialmente de tu lado"
+                  }. Zona: ${nearCity}. Sin vistos/encontrados.`
                 : "Permite ubicación para ver qué hay de tu lado, o filtra por ciudad."}
             </p>
           </div>
@@ -98,7 +108,11 @@ export default async function HomePage({ searchParams }: PageProps<"/">) {
 
           {nearMe && reports.length > 0 ? (
             <div className="mt-5">
-              <NearbyMap origin={nearMe} reports={reports} />
+              <NearbyMap
+                origin={nearMe}
+                reports={reports}
+                radiusKm={radiusKm}
+              />
             </div>
           ) : null}
 

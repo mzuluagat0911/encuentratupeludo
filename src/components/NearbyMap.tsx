@@ -16,8 +16,9 @@ const Inner = dynamic(
 type Props = {
   origin: { lat: number; lng: number };
   reports: PetReport[];
+  radiusKm?: number;
 };
 
-export function NearbyMap({ origin, reports }: Props) {
-  return <Inner origin={origin} reports={reports} />;
+export function NearbyMap({ origin, reports, radiusKm }: Props) {
+  return <Inner origin={origin} reports={reports} radiusKm={radiusKm} />;
 }

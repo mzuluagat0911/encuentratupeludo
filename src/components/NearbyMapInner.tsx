@@ -12,6 +12,7 @@ type Origin = { lat: number; lng: number };
 type Props = {
   origin: Origin;
   reports: PetReport[];
+  radiusKm?: number;
 };
 
 function escapeHtml(value: string): string {
@@ -28,7 +29,7 @@ function pinColor(type: PetReport["report_type"]): string {
   return "#1d4ed8";
 }
 
-export function NearbyMapInner({ origin, reports }: Props) {
+export function NearbyMapInner({ origin, reports, radiusKm }: Props) {
   const hostRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
 
@@ -45,6 +46,18 @@ export function NearbyMapInner({ origin, reports }: Props) {
     }).addTo(map);
 
     const bounds = L.latLngBounds([[origin.lat, origin.lng]]);
+
+    if (radiusKm && radiusKm <= 5) {
+      L.circle([origin.lat, origin.lng], {
+        radius: radiusKm * 1000,
+        color: "#0f766e",
+        weight: 2,
+        fillColor: "#0f766e",
+        fillOpacity: 0.08,
+      }).addTo(map);
+      bounds.extend([origin.lat + radiusKm / 111, origin.lng]);
+      bounds.extend([origin.lat - radiusKm / 111, origin.lng]);
+    }
 
     L.circleMarker([origin.lat, origin.lng], {
       radius: 11,
@@ -97,7 +110,7 @@ export function NearbyMapInner({ origin, reports }: Props) {
       map.remove();
       mapRef.current = null;
     };
-  }, [origin.lat, origin.lng, reports]);
+  }, [origin.lat, origin.lng, reports, radiusKm]);
 
   return (
     <div className="overflow-hidden rounded-3xl border border-line bg-white shadow-[0_8px_24px_-16px_rgba(26,46,40,0.35)]">

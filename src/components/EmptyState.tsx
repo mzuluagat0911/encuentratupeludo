@@ -16,7 +16,7 @@ export function EmptyState({ near = false }: Props) {
       </h3>
       <p className="mt-2 text-sm text-muted">
         {near
-          ? "Prueba “Ver todos los reportes” o cambia de ciudad. También puedes publicar el tuyo."
+          ? "Prueba el botón Todos (más lejos), 5 km, o sal de cerca de mí. No mostramos vistos/encontrados."
           : "Prueba otro nombre, ciudad o tipo de animal, o sé la primera persona en publicar."}
       </p>
       <Link

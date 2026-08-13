@@ -13,6 +13,14 @@ export type GeoPlace = GeoPoint & {
 export const NEAR_RADIUS_KM = 50;
 export const NEAR_FALLBACK_KM = 120;
 
+export type NearRadius = 3 | 5 | typeof NEAR_RADIUS_KM;
+
+export function parseNearRadius(value?: string): NearRadius {
+  if (value === "3") return 3;
+  if (value === "5") return 5;
+  return NEAR_RADIUS_KM;
+}
+
 export function normalizeGeoText(value: string): string {
   return value
     .toLowerCase()
