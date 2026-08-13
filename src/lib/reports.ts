@@ -13,6 +13,14 @@ import {
   hydrateReport,
   matchesResponsibleName,
 } from "@/lib/responsible";
+import {
+  estimateReportPoint,
+  haversineKm,
+  isValidLatLng,
+  NEAR_FALLBACK_KM,
+  NEAR_FALLBACK_LIMIT,
+  NEAR_RADIUS_KM,
+} from "@/lib/geo";
 
 const DATA_DIR = path.join(process.cwd(), ".data");
 const DATA_FILE = path.join(DATA_DIR, "reports.json");
@@ -85,24 +93,59 @@ async function writeLocalStore(reports: PetReport[]): Promise<void> {
 }
 
 function applyFilters(reports: PetReport[], filters: ReportFilters): PetReport[] {
-  return reports
-    .filter((r) => {
-      if (filters.reportType && filters.reportType !== "todas") {
-        if (r.report_type !== filters.reportType) return false;
-      }
-      if (filters.petType && filters.petType !== "todos") {
-        if (r.pet_type !== filters.petType) return false;
-      }
-      if (filters.city && filters.city !== "todas") {
-        if (r.city !== filters.city) return false;
-      }
-      if (!matchesResponsibleName(r, filters.responsible)) return false;
-      return true;
-    })
-    .sort(
+  const origin =
+    typeof filters.lat === "number" &&
+    typeof filters.lng === "number" &&
+    isValidLatLng(filters.lat, filters.lng)
+      ? { lat: filters.lat, lng: filters.lng }
+      : null;
+
+  const filtered = reports.filter((r) => {
+    if (filters.reportType && filters.reportType !== "todas") {
+      if (r.report_type !== filters.reportType) return false;
+    }
+    if (filters.petType && filters.petType !== "todos") {
+      if (r.pet_type !== filters.petType) return false;
+    }
+    if (!origin && filters.city && filters.city !== "todas") {
+      if (r.city !== filters.city) return false;
+    }
+    if (!matchesResponsibleName(r, filters.responsible)) return false;
+    return true;
+  });
+
+  if (!origin) {
+    return filtered.sort(
       (a, b) =>
         new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
     );
+  }
+
+  const ranked = filtered
+    .map((r) => {
+      const est = estimateReportPoint(r);
+      return {
+        ...r,
+        distance_km: haversineKm(origin, est.point),
+        geo_precision: r.lat != null && r.lng != null ? "gps" : est.precision,
+      } satisfies PetReport;
+    })
+    .sort((a, b) => {
+      const da = a.distance_km ?? Infinity;
+      const db = b.distance_km ?? Infinity;
+      if (da !== db) return da - db;
+      return (
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      );
+    });
+
+  const radius = filters.radiusKm ?? NEAR_RADIUS_KM;
+  const nearby = ranked.filter((r) => (r.distance_km ?? Infinity) <= radius);
+  if (nearby.length > 0) return nearby;
+
+  return ranked
+    .filter((r) => (r.distance_km ?? Infinity) <= NEAR_FALLBACK_KM)
+    .slice(0, NEAR_FALLBACK_LIMIT);
 }
 
 async function listLocal(filters: ReportFilters): Promise<PetReport[]> {
@@ -122,6 +165,8 @@ async function createLocal(input: CreateReportInput): Promise<PetReport> {
     phone: input.phone,
     responsible_name: input.responsible_name?.trim() || null,
     description: input.description?.trim() || null,
+    lat: input.lat ?? null,
+    lng: input.lng ?? null,
     created_at: new Date().toISOString(),
   };
   reports.unshift(report);
@@ -147,7 +192,11 @@ async function listSupabase(filters: ReportFilters): Promise<PetReport[]> {
   if (filters.petType && filters.petType !== "todos") {
     query = query.eq("pet_type", filters.petType);
   }
-  if (filters.city && filters.city !== "todas") {
+  const hasOrigin =
+    typeof filters.lat === "number" &&
+    typeof filters.lng === "number" &&
+    isValidLatLng(filters.lat, filters.lng);
+  if (!hasOrigin && filters.city && filters.city !== "todas") {
     query = query.eq("city", filters.city);
   }
 
@@ -158,11 +207,12 @@ async function listSupabase(filters: ReportFilters): Promise<PetReport[]> {
   }
   return applyFilters(
     ((data ?? []) as PetReport[]).map((row) => hydrateReport(row)),
-    { responsible: filters.responsible },
+    filters,
   );
 }
 
 let responsibleColumnMissing = false;
+let geoColumnsMissing = false;
 
 async function createSupabase(input: CreateReportInput): Promise<PetReport> {
   const supabase = createServerClient();
@@ -178,12 +228,17 @@ async function createSupabase(input: CreateReportInput): Promise<PetReport> {
     neighborhood: input.neighborhood.trim(),
     phone: input.phone,
   };
+  const geo =
+    !geoColumnsMissing && input.lat != null && input.lng != null
+      ? { lat: input.lat, lng: input.lng }
+      : {};
 
   if (!responsibleColumnMissing) {
     const withColumn = await supabase
       .from("pet_reports")
       .insert({
         ...base,
+        ...geo,
         responsible_name: name,
         description,
       })
@@ -194,11 +249,26 @@ async function createSupabase(input: CreateReportInput): Promise<PetReport> {
       return hydrateReport(withColumn.data as PetReport);
     }
 
-    const missingColumn = /responsible_name/i.test(
-      withColumn.error?.message || "",
-    );
+    const errMsg = withColumn.error?.message || "";
+    if (/\blat\b|\blng\b/i.test(errMsg)) {
+      geoColumnsMissing = true;
+      const retry = await supabase
+        .from("pet_reports")
+        .insert({
+          ...base,
+          responsible_name: name,
+          description,
+        })
+        .select("*")
+        .single();
+      if (!retry.error && retry.data) {
+        return hydrateReport(retry.data as PetReport);
+      }
+    }
+
+    const missingColumn = /responsible_name/i.test(errMsg);
     if (!missingColumn) {
-      console.error("Supabase create error:", withColumn.error?.message);
+      console.error("Supabase create error:", errMsg);
       throw new Error("No pudimos publicar el reporte. Intenta de nuevo.");
     }
     responsibleColumnMissing = true;
@@ -208,6 +278,7 @@ async function createSupabase(input: CreateReportInput): Promise<PetReport> {
     .from("pet_reports")
     .insert({
       ...base,
+      ...(!geoColumnsMissing ? geo : {}),
       description: name
         ? encodeResponsibleInDescription(name, description)
         : description,

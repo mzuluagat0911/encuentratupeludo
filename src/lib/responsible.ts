@@ -37,12 +37,23 @@ export function parseResponsible(input: {
   return { name: fromColumn || fromText, description: rest };
 }
 
+function toCoord(value: unknown): number | null {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === "string" && value.trim()) {
+    const n = Number(value);
+    return Number.isFinite(n) ? n : null;
+  }
+  return null;
+}
+
 export function hydrateReport<T extends PetReport>(row: T): T {
   const parsed = parseResponsible(row);
   return {
     ...row,
     responsible_name: parsed.name,
     description: parsed.description,
+    lat: toCoord((row as PetReport).lat),
+    lng: toCoord((row as PetReport).lng),
   };
 }
 

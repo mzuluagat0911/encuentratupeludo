@@ -10,6 +10,7 @@ import { COLOMBIA_CITIES } from "@/lib/cities";
 import { checkPublishContent } from "@/lib/contentFilter";
 import { looksLikeRescuedDescription } from "@/lib/rescued";
 import { sanitizeResponsibleName } from "@/lib/responsible";
+import { geocodeReportPlace } from "@/lib/geocode";
 import {
   findCandidateMatches,
   oppositeReportType,
@@ -235,6 +236,8 @@ export async function publishReport(
         ? "rescatado"
         : reportType;
 
+    const coords = await geocodeReportPlace(city, neighborhood);
+
     const report = await createReport({
       report_type: finalType,
       pet_type: petType,
@@ -244,6 +247,8 @@ export async function publishReport(
       phone,
       responsible_name: responsibleName,
       description: description || null,
+      lat: coords.lat,
+      lng: coords.lng,
     });
 
     revalidatePath("/");

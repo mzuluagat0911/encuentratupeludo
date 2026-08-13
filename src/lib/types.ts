@@ -12,6 +12,11 @@ export type PetReport = {
   responsible_name: string | null;
   description: string | null;
   created_at: string;
+  lat?: number | null;
+  lng?: number | null;
+  /** Distancia al usuario (solo en modo cerca de mí). */
+  distance_km?: number;
+  geo_precision?: "gps" | "place" | "city";
 };
 
 export type CreateReportInput = {
@@ -23,6 +28,8 @@ export type CreateReportInput = {
   phone: string;
   responsible_name?: string | null;
   description?: string | null;
+  lat?: number | null;
+  lng?: number | null;
 };
 
 export type ReportFilters = {
@@ -30,4 +37,7 @@ export type ReportFilters = {
   petType?: PetType | "todos";
   city?: string;
   responsible?: string;
+  lat?: number;
+  lng?: number;
+  radiusKm?: number;
 };

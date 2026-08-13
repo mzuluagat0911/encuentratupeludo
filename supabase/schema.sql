@@ -12,7 +12,9 @@ create table if not exists public.pet_reports (
   phone text not null,
   responsible_name text,
   description text,
-  created_at timestamptz not null default now()
+  created_at timestamptz not null default now(),
+  lat double precision,
+  lng double precision
 );
 
 create index if not exists pet_reports_created_at_idx

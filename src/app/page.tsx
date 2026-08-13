@@ -11,6 +11,12 @@ import { countFeedReports } from "@/lib/rescueOps";
 import { hubsForFeedBanner } from "@/lib/hubs";
 import { CityHelpBanner } from "@/components/CityHelpBanner";
 import type { PetType, ReportType } from "@/lib/types";
+import {
+  isValidLatLng,
+  NEAR_RADIUS_KM,
+  nearestCityName,
+  parseCoord,
+} from "@/lib/geo";
 
 function parseTipo(value?: string): ReportType | "todas" {
   if (value === "perdido" || value === "encontrado" || value === "rescatado") {
@@ -38,15 +44,24 @@ export default async function HomePage({ searchParams }: PageProps<"/">) {
       : "todas";
   const responsable =
     typeof params.nombre === "string" ? params.nombre.trim() : "";
+  const lat = parseCoord(typeof params.lat === "string" ? params.lat : undefined);
+  const lng = parseCoord(typeof params.lng === "string" ? params.lng : undefined);
+  const nearMe =
+    lat != null && lng != null && isValidLatLng(lat, lng)
+      ? { lat, lng }
+      : null;
+  const nearCity = nearMe ? nearestCityName(nearMe) : null;
 
   const reports = await listReports({
     reportType: tipo,
     petType: animal,
-    city: ciudad,
+    city: nearMe ? "todas" : ciudad,
     responsible: responsable || undefined,
+    lat: nearMe?.lat,
+    lng: nearMe?.lng,
   });
   const counts = await countFeedReports();
-  const helpHubs = hubsForFeedBanner(ciudad);
+  const helpHubs = hubsForFeedBanner(nearMe && nearCity ? nearCity : ciudad);
 
   return (
     <>
@@ -63,10 +78,12 @@ export default async function HomePage({ searchParams }: PageProps<"/">) {
 
           <div className="mb-5">
             <h2 className="font-[family-name:var(--font-display)] text-2xl font-semibold tracking-tight text-foreground">
-              Reportes recientes
+              {nearMe ? "Cerca de ti" : "Reportes recientes"}
             </h2>
             <p className="mt-1 text-sm text-muted">
-              Filtra y contacta por WhatsApp sin crear cuenta.
+              {nearMe
+                ? `Ordenados por distancia (~${NEAR_RADIUS_KM} km). Zona: ${nearCity}. La distancia es aproximada según barrio y ciudad.`
+                : "Filtra, usa “Cerca de mí” o contacta por WhatsApp sin crear cuenta."}
             </p>
           </div>
 
@@ -80,7 +97,7 @@ export default async function HomePage({ searchParams }: PageProps<"/">) {
 
           <div className="mt-5 grid gap-4">
             {reports.length === 0 ? (
-              <EmptyState />
+              <EmptyState near={Boolean(nearMe)} />
             ) : (
               reports.map((report) => (
                 <PetCard key={report.id} report={report} />

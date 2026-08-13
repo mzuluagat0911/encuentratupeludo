@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import type { PetReport } from "@/lib/types";
 import { formatRelativeDate } from "@/lib/format";
+import { formatDistanceKm } from "@/lib/geo";
 import { buildWhatsAppUrl, whatsappButtonLabel } from "@/lib/whatsapp";
 import { isDemoReport } from "@/lib/demos";
 import { reportPath } from "@/lib/site";
@@ -89,7 +90,15 @@ export function PetCard({ report }: Props) {
             />
             <div>
               <p className="font-semibold leading-snug">{report.neighborhood}</p>
-              <p className="text-muted">{report.city}</p>
+              <p className="text-muted">
+                {report.city}
+                {typeof report.distance_km === "number" ? (
+                  <span className="font-semibold text-primary">
+                    {" "}
+                    · a {formatDistanceKm(report.distance_km)}
+                  </span>
+                ) : null}
+              </p>
             </div>
           </div>
 

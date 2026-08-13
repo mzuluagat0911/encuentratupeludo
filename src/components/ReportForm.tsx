@@ -387,6 +387,10 @@ export function ReportForm() {
             placeholder='Ej. "Cerca al parque El Virrey"'
             className="tap-target w-full rounded-2xl border border-line bg-white px-4 py-3.5 text-base outline-none ring-primary focus:ring-2"
           />
+          <span className="mt-1.5 block text-xs text-muted">
+            Con ciudad y zona ubicamos el reporte en el mapa (no usamos tu GPS
+            al publicar).
+          </span>
         </label>
 
         <label className="block">

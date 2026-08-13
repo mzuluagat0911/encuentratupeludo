@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Search } from "lucide-react";
 import { COLOMBIA_CITIES } from "@/lib/cities";
+import { NearMeButton } from "@/components/NearMeButton";
 
 const TABS: {
   value: string;
@@ -31,6 +32,7 @@ export function FeedFilters() {
   const tipo = searchParams.get("tipo") || "todas";
   const animal = searchParams.get("animal") || "todos";
   const ciudad = searchParams.get("ciudad") || "todas";
+  const nearMe = Boolean(searchParams.get("lat") && searchParams.get("lng"));
   const nombreParam = searchParams.get("nombre") || "";
   const [nombre, setNombre] = useState(nombreParam);
   const searchParamsRef = useRef(searchParams);
@@ -70,6 +72,8 @@ export function FeedFilters() {
 
   return (
     <div className="space-y-3">
+      <NearMeButton />
+
       <div
         role="tablist"
         aria-label="Tipo de reporte"
@@ -139,9 +143,10 @@ export function FeedFilters() {
             Ciudad
           </span>
           <select
-            value={ciudad}
+            value={nearMe ? "todas" : ciudad}
+            disabled={nearMe}
             onChange={(e) => update("ciudad", e.target.value)}
-            className="tap-target w-full rounded-2xl border border-line bg-white px-3 py-3 text-sm font-medium text-foreground outline-none ring-primary focus:ring-2"
+            className="tap-target w-full rounded-2xl border border-line bg-white px-3 py-3 text-sm font-medium text-foreground outline-none ring-primary focus:ring-2 disabled:opacity-50"
           >
             <option value="todas">Todas las ciudades</option>
             {COLOMBIA_CITIES.map((city) => (
