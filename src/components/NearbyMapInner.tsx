@@ -66,8 +66,20 @@ export function NearbyMapInner({ origin, reports, radiusKm }: Props) {
     const el = hostRef.current;
     if (!el) return;
 
-    const map = L.map(el, { scrollWheelZoom: false, zoomControl: true });
+    const coarse =
+      typeof window !== "undefined" &&
+      window.matchMedia("(pointer: coarse)").matches;
+
+    const map = L.map(el, {
+      scrollWheelZoom: false,
+      zoomControl: true,
+      // En celular un dedo debe scrollear la página, no atrapar el mapa.
+      dragging: !coarse,
+      tap: true,
+      touchZoom: true,
+    });
     mapRef.current = map;
+    if (coarse) map.dragging.disable();
 
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
       attribution: "&copy; OpenStreetMap",
@@ -160,7 +172,7 @@ export function NearbyMapInner({ origin, reports, radiusKm }: Props) {
       </div>
       <div
         ref={hostRef}
-        className="h-[min(42vh,280px)] w-full min-h-[220px] sm:h-80"
+        className="near-map-host h-[min(42vh,280px)] w-full min-h-[220px] sm:h-80"
       />
       <p className="flex flex-wrap items-center gap-x-2.5 gap-y-1 px-3 py-2 text-[11px] font-medium text-muted">
         <span className="font-bold text-foreground">

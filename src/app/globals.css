@@ -93,6 +93,12 @@ body {
   min-height: 48px;
 }
 
+/* Un dedo scrollea la página; pellizco hace zoom. Leaflet no debe bloquear el feed. */
+.near-map-host,
+.near-map-host .leaflet-container {
+  touch-action: pan-y pinch-zoom;
+}
+
 @keyframes report-focus-pulse {
   0%,
   100% {

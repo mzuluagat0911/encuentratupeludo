@@ -39,7 +39,7 @@ export function ReportForm() {
     initialState,
   );
   const [reportType, setReportType] = useState<ReportType | null>(null);
-  const [petType, setPetType] = useState<PetType>("perro");
+  const [petType, setPetType] = useState<PetType | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [hasPhoto, setHasPhoto] = useState(false);
   const [cropping, setCropping] = useState(false);
@@ -118,7 +118,14 @@ export function ReportForm() {
 
   function onFormSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    if (!reportType || !hasPhoto || cropping || pending || checkingMatches) {
+    if (
+      !reportType ||
+      !petType ||
+      !hasPhoto ||
+      cropping ||
+      pending ||
+      checkingMatches
+    ) {
       return;
     }
 
@@ -262,7 +269,7 @@ export function ReportForm() {
         <input type="hidden" name="report_type" value={reportType ?? ""} />
       </fieldset>
 
-      <fieldset className="space-y-3" disabled={!reportType}>
+      <fieldset className="space-y-3">
         <legend className="text-sm font-bold uppercase tracking-wide text-muted">
           Tipo de mascota
         </legend>
@@ -272,23 +279,27 @@ export function ReportForm() {
               { value: "perro", label: "Perro", Icon: Dog },
               { value: "gato", label: "Gato", Icon: Cat },
             ] as const
-          ).map(({ value, label, Icon }) => (
-            <button
-              key={value}
-              type="button"
-              onClick={() => setPetType(value)}
-              className={`tap-target flex items-center justify-center gap-2 rounded-2xl border-2 px-3 py-3.5 text-base font-semibold transition ${
-                petType === value
-                  ? "border-primary bg-primary text-white"
-                  : "border-line bg-white text-foreground"
-              }`}
-            >
-              <Icon className="h-5 w-5" aria-hidden />
-              {label}
-            </button>
-          ))}
+          ).map(({ value, label, Icon }) => {
+            const on = petType === value;
+            return (
+              <button
+                key={value}
+                type="button"
+                aria-pressed={on}
+                onClick={() => setPetType(value)}
+                className={`tap-target flex items-center justify-center gap-2 rounded-2xl border-2 px-3 py-3.5 text-base font-semibold transition ${
+                  on
+                    ? "border-[#0f766e] bg-[#0f766e] text-white shadow-sm"
+                    : "border-line bg-white text-foreground hover:border-[#0f766e]/40"
+                }`}
+              >
+                <Icon className="h-5 w-5" aria-hidden />
+                {label}
+              </button>
+            );
+          })}
         </div>
-        <input type="hidden" name="pet_type" value={petType} />
+        <input type="hidden" name="pet_type" value={petType ?? ""} required />
       </fieldset>
 
       <div className={`space-y-5 ${!reportType ? "pointer-events-none opacity-40" : ""}`}>
@@ -459,7 +470,14 @@ export function ReportForm() {
 
       <button
         type="submit"
-        disabled={!reportType || !hasPhoto || pending || cropping || checkingMatches}
+        disabled={
+          !reportType ||
+          !petType ||
+          !hasPhoto ||
+          pending ||
+          cropping ||
+          checkingMatches
+        }
         className="tap-target flex w-full items-center justify-center gap-2 rounded-2xl bg-primary px-4 py-4 text-base font-bold text-white transition hover:bg-primary-dark disabled:cursor-not-allowed disabled:opacity-50"
       >
         {pending ? (
