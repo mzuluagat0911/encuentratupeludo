@@ -70,7 +70,7 @@ export function NearbyMapInner({ origin, reports }: Props) {
           : "";
       const title = `${r.pet_type === "gato" ? "Gato" : "Perro"} ${reportTypeLabel(r.report_type).toLowerCase()}`;
       L.circleMarker([lat, lng], {
-        radius: 9,
+        radius: 10,
         color: "#ffffff",
         weight: 2,
         fillColor: pinColor(r.report_type),
@@ -101,8 +101,11 @@ export function NearbyMapInner({ origin, reports }: Props) {
 
   return (
     <div className="overflow-hidden rounded-3xl border border-line bg-white shadow-[0_8px_24px_-16px_rgba(26,46,40,0.35)]">
-      <div ref={hostRef} className="h-64 w-full sm:h-80" />
+      <div ref={hostRef} className="h-72 w-full sm:h-96" />
       <p className="flex flex-wrap gap-x-3 gap-y-1 px-4 py-2.5 text-[11px] font-medium text-muted">
+        <span className="font-bold text-foreground">
+          {reports.length} peludos en el mapa
+        </span>
         <span className="inline-flex items-center gap-1.5">
           <span className="h-2.5 w-2.5 rounded-full bg-primary" /> Tú
         </span>
@@ -116,7 +119,7 @@ export function NearbyMapInner({ origin, reports }: Props) {
           <span className="h-2.5 w-2.5 rounded-full bg-rescued" /> Rescatado
         </span>
         <span className="w-full text-muted/80">
-          Puntos aproximados por ciudad y zona · no es la casa exacta
+          Cada punto es la zona/barrio del reporte, no el GPS del celular
         </span>
       </p>
     </div>

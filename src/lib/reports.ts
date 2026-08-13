@@ -15,12 +15,18 @@ import {
 } from "@/lib/responsible";
 import {
   estimateReportPoint,
+  getCityPoint,
   haversineKm,
   isValidLatLng,
   NEAR_FALLBACK_KM,
-  NEAR_FALLBACK_LIMIT,
   NEAR_RADIUS_KM,
 } from "@/lib/geo";
+import {
+  geocodeReportZones,
+  spreadOverlappingPins,
+  storedCoordsAreCityOnly,
+  zoneKey,
+} from "@/lib/geocode";
 
 const DATA_DIR = path.join(process.cwd(), ".data");
 const DATA_FILE = path.join(DATA_DIR, "reports.json");
@@ -92,7 +98,28 @@ async function writeLocalStore(reports: PetReport[]): Promise<void> {
   await fs.writeFile(DATA_FILE, JSON.stringify(reports, null, 2), "utf8");
 }
 
-function applyFilters(reports: PetReport[], filters: ReportFilters): PetReport[] {
+function matchesBaseFilters(
+  r: PetReport,
+  filters: ReportFilters,
+  origin: { lat: number; lng: number } | null,
+): boolean {
+  if (filters.reportType && filters.reportType !== "todas") {
+    if (r.report_type !== filters.reportType) return false;
+  }
+  if (filters.petType && filters.petType !== "todos") {
+    if (r.pet_type !== filters.petType) return false;
+  }
+  if (!origin && filters.city && filters.city !== "todas") {
+    if (r.city !== filters.city) return false;
+  }
+  if (!matchesResponsibleName(r, filters.responsible)) return false;
+  return true;
+}
+
+async function applyFilters(
+  reports: PetReport[],
+  filters: ReportFilters,
+): Promise<PetReport[]> {
   const origin =
     typeof filters.lat === "number" &&
     typeof filters.lng === "number" &&
@@ -100,19 +127,7 @@ function applyFilters(reports: PetReport[], filters: ReportFilters): PetReport[]
       ? { lat: filters.lat, lng: filters.lng }
       : null;
 
-  const filtered = reports.filter((r) => {
-    if (filters.reportType && filters.reportType !== "todas") {
-      if (r.report_type !== filters.reportType) return false;
-    }
-    if (filters.petType && filters.petType !== "todos") {
-      if (r.pet_type !== filters.petType) return false;
-    }
-    if (!origin && filters.city && filters.city !== "todas") {
-      if (r.city !== filters.city) return false;
-    }
-    if (!matchesResponsibleName(r, filters.responsible)) return false;
-    return true;
-  });
+  const filtered = reports.filter((r) => matchesBaseFilters(r, filters, origin));
 
   if (!origin) {
     return filtered.sort(
@@ -121,15 +136,35 @@ function applyFilters(reports: PetReport[], filters: ReportFilters): PetReport[]
     );
   }
 
-  const ranked = filtered
+  // Solo geocodificar zonas del área (no todo el país).
+  const metro = filtered.filter((r) => {
+    const city = getCityPoint(r.city);
+    if (!city) return true;
+    return haversineKm(origin, city) <= NEAR_FALLBACK_KM;
+  });
+
+  const zones = await geocodeReportZones(metro);
+
+  const ranked = metro
     .map((r) => {
-      const est = estimateReportPoint(r);
+      const z = zones.get(zoneKey(r.city, r.neighborhood));
+      const ignoreStored = storedCoordsAreCityOnly(r);
+      const est = estimateReportPoint({
+        ...r,
+        lat: ignoreStored ? null : r.lat,
+        lng: ignoreStored ? null : r.lng,
+      });
+      const point = z ?? est.point;
       return {
         ...r,
-        lat: r.lat ?? est.point.lat,
-        lng: r.lng ?? est.point.lng,
-        distance_km: haversineKm(origin, est.point),
-        geo_precision: r.lat != null && r.lng != null ? "gps" : est.precision,
+        lat: point.lat,
+        lng: point.lng,
+        distance_km: haversineKm(origin, point),
+        geo_precision: ignoreStored
+          ? z
+            ? "place"
+            : est.precision
+          : "gps",
       } satisfies PetReport;
     })
     .sort((a, b) => {
@@ -143,16 +178,20 @@ function applyFilters(reports: PetReport[], filters: ReportFilters): PetReport[]
 
   const radius = filters.radiusKm ?? NEAR_RADIUS_KM;
   const nearby = ranked.filter((r) => (r.distance_km ?? Infinity) <= radius);
-  if (nearby.length > 0) return nearby;
+  const list =
+    nearby.length > 0
+      ? nearby
+      : ranked.filter((r) => (r.distance_km ?? Infinity) <= NEAR_FALLBACK_KM);
 
-  return ranked
-    .filter((r) => (r.distance_km ?? Infinity) <= NEAR_FALLBACK_KM)
-    .slice(0, NEAR_FALLBACK_LIMIT);
+  return spreadOverlappingPins(list);
 }
 
 async function listLocal(filters: ReportFilters): Promise<PetReport[]> {
   const reports = await ensureLocalStore();
-  return applyFilters(reports.map((row) => hydrateReport(row)), filters);
+  return await applyFilters(
+    reports.map((row) => hydrateReport(row)),
+    filters,
+  );
 }
 
 async function createLocal(input: CreateReportInput): Promise<PetReport> {
@@ -207,7 +246,7 @@ async function listSupabase(filters: ReportFilters): Promise<PetReport[]> {
     console.error("Supabase list error:", error.message);
     throw new Error("No pudimos cargar los reportes. Intenta de nuevo.");
   }
-  return applyFilters(
+  return await applyFilters(
     ((data ?? []) as PetReport[]).map((row) => hydrateReport(row)),
     filters,
   );

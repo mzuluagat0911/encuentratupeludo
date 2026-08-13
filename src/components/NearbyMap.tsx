@@ -8,7 +8,7 @@ const Inner = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div className="h-64 animate-pulse rounded-3xl border border-line bg-white/70 sm:h-80" />
+      <div className="h-72 animate-pulse rounded-3xl border border-line bg-white/70 sm:h-96" />
     ),
   },
 );

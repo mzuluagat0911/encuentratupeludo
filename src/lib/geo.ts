@@ -1,4 +1,3 @@
-import type { PetReport } from "@/lib/types";
 import { COLOMBIA_CITIES } from "@/lib/cities";
 
 export type GeoPoint = { lat: number; lng: number };
@@ -13,7 +12,6 @@ export type GeoPlace = GeoPoint & {
 /** Radio por defecto: cubre área metropolitana (Yumbo–Cali, Villamaría–Manizales). */
 export const NEAR_RADIUS_KM = 50;
 export const NEAR_FALLBACK_KM = 120;
-export const NEAR_FALLBACK_LIMIT = 12;
 
 export function normalizeGeoText(value: string): string {
   return value
@@ -130,7 +128,12 @@ export function estimateReportPoint(report: {
     Number.isFinite(report.lat) &&
     Number.isFinite(report.lng)
   ) {
-    return { point: { lat: report.lat, lng: report.lng }, precision: "gps" };
+    const city = CITY_CENTROIDS.get(report.city);
+    const stored = { lat: report.lat, lng: report.lng };
+    // Si es el centro de la ciudad, ignorar: hay que usar la zona.
+    if (!city || haversineKm(stored, city) >= 0.8) {
+      return { point: stored, precision: "gps" };
+    }
   }
 
   const cityNorm = normalizeGeoText(report.city);
