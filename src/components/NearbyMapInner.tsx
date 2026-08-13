@@ -75,7 +75,6 @@ export function NearbyMapInner({ origin, reports, radiusKm }: Props) {
       zoomControl: true,
       // En celular un dedo debe scrollear la página, no atrapar el mapa.
       dragging: !coarse,
-      tap: true,
       touchZoom: true,
     });
     mapRef.current = map;
