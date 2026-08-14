@@ -1,5 +1,6 @@
 import { ImageResponse } from "next/og";
 import { getReportById } from "@/lib/reports";
+import { reportPhotoAbsoluteUrl } from "@/lib/photoDisplay";
 import { reportTypeLabel } from "@/lib/reportCopy";
 
 export const alt = "Ubica tu Peludo";
@@ -43,9 +44,10 @@ export default async function Image({ params }: Props) {
         ? "#0f766e"
         : "#1d4ed8";
 
+  const photoUrl = reportPhotoAbsoluteUrl(report ?? { id: id, photo_url: null });
   const photo =
-    report?.photo_url && /^https?:\/\//i.test(report.photo_url)
-      ? await toDataUrl(report.photo_url)
+    photoUrl && /^https?:\/\//i.test(photoUrl)
+      ? await toDataUrl(photoUrl)
       : null;
 
   return new ImageResponse(

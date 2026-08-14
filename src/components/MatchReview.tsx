@@ -12,6 +12,7 @@ import {
 import type { PetReport, ReportType } from "@/lib/types";
 import { formatRelativeDate } from "@/lib/format";
 import { buildWhatsAppUrl, whatsappButtonLabel } from "@/lib/whatsapp";
+import { reportPhotoSrc } from "@/lib/photoDisplay";
 
 type Props = {
   candidates: PetReport[];
@@ -73,16 +74,17 @@ export function MatchReview({
         {candidates.map((report) => {
           const PetIcon = report.pet_type === "perro" ? Dog : Cat;
           const wa = buildWhatsAppUrl(report);
+          const photo = reportPhotoSrc(report);
           return (
             <li
               key={report.id}
               className="overflow-hidden rounded-3xl border border-line bg-card shadow-[0_8px_24px_-16px_rgba(26,46,40,0.35)]"
             >
               <div className="relative aspect-[4/3] overflow-hidden bg-gradient-to-br from-[#e8f4ef] to-[#f3ebe3]">
-                {report.photo_url ? (
+                {photo ? (
                   <>
                     <Image
-                      src={report.photo_url}
+                      src={photo}
                       alt=""
                       fill
                       aria-hidden
@@ -90,7 +92,7 @@ export function MatchReview({
                       sizes="(max-width: 768px) 100vw, 480px"
                     />
                     <Image
-                      src={report.photo_url}
+                      src={photo}
                       alt={`${report.pet_type} ${typeLabel(report.report_type).toLowerCase()} en ${report.city}`}
                       fill
                       className="object-contain"

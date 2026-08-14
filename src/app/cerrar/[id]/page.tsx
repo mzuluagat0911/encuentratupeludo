@@ -5,6 +5,7 @@ import { ArrowLeft, Cat, Dog, MapPin } from "lucide-react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { CloseCaseForm } from "@/components/CloseCaseForm";
 import { getReportById } from "@/lib/reports";
+import { reportPhotoSrc } from "@/lib/photoDisplay";
 
 type PageParams = {
   params: Promise<{ id: string }>;
@@ -26,6 +27,7 @@ export default async function CerrarCasoPage({ params }: PageParams) {
   if (!report) notFound();
 
   const PetIcon = report.pet_type === "perro" ? Dog : Cat;
+  const photo = reportPhotoSrc(report);
 
   return (
     <>
@@ -49,9 +51,9 @@ export default async function CerrarCasoPage({ params }: PageParams) {
 
         <article className="mt-6 overflow-hidden rounded-3xl border border-line bg-card">
           <div className="relative aspect-[4/3] bg-gradient-to-br from-[#e8f4ef] to-[#f3ebe3]">
-            {report.photo_url ? (
+            {photo ? (
               <Image
-                src={report.photo_url}
+                src={photo}
                 alt={`${report.pet_type} en ${report.city}`}
                 fill
                 className="object-contain"

@@ -8,6 +8,7 @@ import { formatDistanceKm } from "@/lib/geo";
 import { reportTypeLabel } from "@/lib/reportCopy";
 import { NearRadiusBar } from "@/components/NearRadiusBar";
 import { focusReportCard } from "@/components/ReportCardShell";
+import { reportPhotoSrc } from "@/lib/photoDisplay";
 
 type Origin = { lat: number; lng: number };
 
@@ -43,7 +44,7 @@ function pinPopupHtml(report: PetReport): string {
     typeof report.distance_km === "number"
       ? `a ~${formatDistanceKm(report.distance_km)}`
       : escapeHtml(report.neighborhood);
-  const src = safePhotoSrc(report.photo_url);
+  const src = safePhotoSrc(reportPhotoSrc(report));
   const media = src
     ? `<img src="${src}" alt="" width="72" height="72" />`
     : `<span class="near-pin-ph">${report.pet_type === "gato" ? "🐱" : "🐶"}</span>`;
