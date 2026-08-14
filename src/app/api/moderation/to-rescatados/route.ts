@@ -19,7 +19,8 @@ type Row = {
 
 /**
  * 1) Mueve a rescatado los casos de Manizales + frases de reencuentro
- * 2) Deduplica dejando la descripción de “ya se encontraron”
+ * 2) Fuerza IDs confirmados a mano (Alaska, Duna, perra blanca de Granada)
+ * 3) Deduplica dejando la descripción de “ya se encontraron”
  */
 export async function POST() {
   if (!isSupabaseConfigured()) {
@@ -125,6 +126,20 @@ export async function POST() {
     if (data?.length) movedPerdidos.push(...(data as Row[]));
   }
 
+  // Casos confirmados a mano (no traen frase de reencuentro en la descripción)
+  const forceRescueIds = [
+    "d0708ee6-f784-48ed-9cf7-713f8ede7dea", // perra blanca, Barrio Granada, Armenia
+    "f131b01b-4667-422b-baf9-a590251a1abb", // Alaska, barrio Granada, Armenia
+    "3f69e4e1-1ff1-4366-bb92-fdc0f6dd279e", // Duna, Conjunto Piamonte, Manizales
+  ];
+  const { data: forced } = await supabase
+    .from("pet_reports")
+    .update({ report_type: "rescatado" })
+    .in("id", forceRescueIds)
+    .neq("report_type", "rescatado")
+    .select("id, report_type, city, neighborhood, description, pet_type");
+  if (forced?.length) moved.push(...(forced as Row[]));
+
   // Corrección puntual: no eran reencuentros (match laxo de "Álamos")
   const falsePositiveIds = [
     "a0cc2722-eca6-49c3-af2c-af83d6273ef5", // MANOLO
@@ -149,6 +164,7 @@ export async function POST() {
     ok: dedupe.ok,
     moved,
     moved_from_perdidos: movedPerdidos,
+    forced_ids: forced || [],
     reverted_false_positives: reverted || [],
     dedupe,
     rescatados_total: count ?? 0,
