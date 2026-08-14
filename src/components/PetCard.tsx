@@ -20,6 +20,7 @@ import {
 } from "@/lib/reportCopy";
 import { ShareReportButton } from "@/components/ShareReportButton";
 import { ReportCardShell } from "@/components/ReportCardShell";
+import { reportPhotoSrc } from "@/lib/photoDisplay";
 
 type Props = {
   report: PetReport;
@@ -32,6 +33,7 @@ export function PetCard({ report, nearQuery }: Props) {
   const PetIcon = report.pet_type === "perro" ? Dog : Cat;
   const wa = buildWhatsAppUrl(report);
   const href = reportHrefWithNear(report.id, nearQuery);
+  const photo = reportPhotoSrc(report);
 
   return (
     <ReportCardShell
@@ -40,10 +42,10 @@ export function PetCard({ report, nearQuery }: Props) {
     >
       <Link href={href} className="block">
         <div className="relative aspect-[4/3] overflow-hidden bg-gradient-to-br from-[#e8f4ef] to-[#f3ebe3]">
-          {report.photo_url ? (
+          {photo ? (
             <>
               <Image
-                src={report.photo_url}
+                src={photo}
                 alt=""
                 fill
                 aria-hidden
@@ -51,7 +53,7 @@ export function PetCard({ report, nearQuery }: Props) {
                 sizes="(max-width: 768px) 100vw, 480px"
               />
               <Image
-                src={report.photo_url}
+                src={photo}
                 alt={`${report.pet_type} ${reportTypeLabel(report.report_type).toLowerCase()} en ${report.city}`}
                 fill
                 className="object-contain"

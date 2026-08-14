@@ -17,6 +17,7 @@ import {
   NearAwareFeedLink,
 } from "@/components/BackToFeedLink";
 import { getReportById } from "@/lib/reports";
+import { reportPhotoSrc } from "@/lib/photoDisplay";
 import {
   reportShareDescription,
   reportShareTitle,
@@ -90,6 +91,7 @@ export default async function ReportePage({
   const isRescued = report.report_type === "rescatado";
   const PetIcon = report.pet_type === "perro" ? Dog : Cat;
   const wa = buildWhatsAppUrl(report);
+  const photo = reportPhotoSrc(report);
   const feedHref = feedHrefFromParams({
     lat: typeof query.lat === "string" ? query.lat : undefined,
     lng: typeof query.lng === "string" ? query.lng : undefined,
@@ -104,10 +106,10 @@ export default async function ReportePage({
 
         <article className="overflow-hidden rounded-3xl border border-line bg-card shadow-[0_8px_24px_-16px_rgba(26,46,40,0.35)]">
           <div className="relative aspect-[4/3] overflow-hidden bg-gradient-to-br from-[#e8f4ef] to-[#f3ebe3]">
-            {report.photo_url ? (
+            {photo ? (
               <>
                 <Image
-                  src={report.photo_url}
+                  src={photo}
                   alt=""
                   fill
                   aria-hidden
@@ -116,7 +118,7 @@ export default async function ReportePage({
                   priority
                 />
                 <Image
-                  src={report.photo_url}
+                  src={photo}
                   alt={`${report.pet_type} ${reportTypeLabel(report.report_type).toLowerCase()} en ${report.city}`}
                   fill
                   className="object-contain"
