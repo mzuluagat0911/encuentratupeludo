@@ -5,9 +5,9 @@ import { getSiteUrl } from "@/lib/site";
  * Ruta relativa en /public.
  */
 const PHOTO_OVERRIDES: Record<string, string> = {
-  // Pitbull café con blanco · Robledo Pilarica, Medellín
+  // Pitbull café con blanco · Robledo Pilarica: recorte de la toma de abajo (cabeza)
   "5aab0690-2bf5-44cf-bbaf-f1af566f9b52":
-    "/recrops/5aab0690-2bf5-44cf-bbaf-f1af566f9b52.jpg",
+    "/recrops/5aab0690-2bf5-44cf-bbaf-f1af566f9b52-v2.jpg",
 };
 
 export function photoOverridePath(id: string): string | null {
