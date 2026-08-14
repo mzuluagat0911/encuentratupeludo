@@ -43,3 +43,13 @@ where report_type = 'perdido'
     description ilike '%Coliflor%'
     or neighborhood ilike '%Coliflor%'
   );
+
+-- Confirmados: perra blanca y Alaska (Granada, Armenia) + Duna (Piamonte, Manizales)
+update public.pet_reports
+set report_type = 'rescatado'
+where report_type <> 'rescatado'
+  and id in (
+    'd0708ee6-f784-48ed-9cf7-713f8ede7dea',
+    'f131b01b-4667-422b-baf9-a590251a1abb',
+    '3f69e4e1-1ff1-4366-bb92-fdc0f6dd279e'
+  );
