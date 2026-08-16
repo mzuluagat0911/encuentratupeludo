@@ -45,11 +45,13 @@ where report_type = 'perdido'
   );
 
 -- Confirmados: perra blanca y Alaska (Granada, Armenia) + Duna (Piamonte, Manizales)
+-- + gato amarillo Alta Suiza (Estefanía Gómez)
 update public.pet_reports
 set report_type = 'rescatado'
 where report_type <> 'rescatado'
   and id in (
     'd0708ee6-f784-48ed-9cf7-713f8ede7dea',
     'f131b01b-4667-422b-baf9-a590251a1abb',
-    '3f69e4e1-1ff1-4366-bb92-fdc0f6dd279e'
+    '3f69e4e1-1ff1-4366-bb92-fdc0f6dd279e',
+    'cf498893-82e3-406c-825f-062d87d6eddf'
   );
