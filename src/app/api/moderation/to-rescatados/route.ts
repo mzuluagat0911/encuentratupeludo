@@ -133,6 +133,7 @@ export async function POST() {
     "d0708ee6-f784-48ed-9cf7-713f8ede7dea", // perra blanca, Barrio Granada, Armenia
     "f131b01b-4667-422b-baf9-a590251a1abb", // Alaska, barrio Granada, Armenia
     "3f69e4e1-1ff1-4366-bb92-fdc0f6dd279e", // Duna, Conjunto Piamonte, Manizales
+    "cf498893-82e3-406c-825f-062d87d6eddf", // gato amarillo Alta Suiza, Manizales (Estefanía Gómez)
   ];
   const { data: forced } = await supabase
     .from("pet_reports")
