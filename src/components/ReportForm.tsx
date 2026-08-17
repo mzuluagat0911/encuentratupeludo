@@ -60,12 +60,24 @@ export function ReportForm({ initialType = null }: Props) {
   const fileRef = useRef<HTMLInputElement>(null);
   const photoFileRef = useRef<File | null>(null);
   const previewRef = useRef<string | null>(null);
+  const typeRefs = useRef<Partial<Record<ReportType, HTMLButtonElement | null>>>({});
 
   useEffect(() => {
     return () => {
       if (previewRef.current) URL.revokeObjectURL(previewRef.current);
     };
   }, []);
+
+  useEffect(() => {
+    if (!initialType) return;
+    const t = window.setTimeout(() => {
+      typeRefs.current[initialType]?.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+    }, 150);
+    return () => window.clearTimeout(t);
+  }, [initialType]);
 
   function setPreviewUrl(url: string | null) {
     if (previewRef.current) URL.revokeObjectURL(previewRef.current);
@@ -245,6 +257,9 @@ export function ReportForm({ initialType = null }: Props) {
         <div className="grid gap-3">
           <button
             type="button"
+            ref={(el) => {
+              typeRefs.current.perdido = el;
+            }}
             onClick={() => setReportType("perdido")}
             className={`tap-target rounded-3xl border-2 px-4 py-4 text-left transition ${
               reportType === "perdido"
@@ -261,6 +276,9 @@ export function ReportForm({ initialType = null }: Props) {
           </button>
           <button
             type="button"
+            ref={(el) => {
+              typeRefs.current.encontrado = el;
+            }}
             onClick={() => setReportType("encontrado")}
             className={`tap-target rounded-3xl border-2 px-4 py-4 text-left transition ${
               reportType === "encontrado"
@@ -277,6 +295,9 @@ export function ReportForm({ initialType = null }: Props) {
           </button>
           <button
             type="button"
+            ref={(el) => {
+              typeRefs.current.adopcion = el;
+            }}
             onClick={() => setReportType("adopcion")}
             className={`tap-target rounded-3xl border-2 px-4 py-4 text-left transition ${
               reportType === "adopcion"
@@ -294,6 +315,9 @@ export function ReportForm({ initialType = null }: Props) {
           </button>
           <button
             type="button"
+            ref={(el) => {
+              typeRefs.current.rescatado = el;
+            }}
             onClick={() => setReportType("rescatado")}
             className={`tap-target rounded-3xl border-2 px-4 py-4 text-left transition ${
               reportType === "rescatado"

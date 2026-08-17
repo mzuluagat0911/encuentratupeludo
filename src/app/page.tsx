@@ -91,7 +91,7 @@ export default async function HomePage({ searchParams }: PageProps<"/">) {
         seen={counts.encontrado}
         adopt={counts.adopcion}
       />
-      <main className="flex-1 pb-24">
+      <main className="flex-1 pb-28 sm:pb-24">
         {nearMe ? null : <HomeHero />}
         {nearMe ? null : <CityHelpBanner hubs={helpHubs} />}
         <section

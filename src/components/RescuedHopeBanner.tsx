@@ -27,7 +27,8 @@ export function RescuedHopeBanner({ rescued, lost, seen, adopt }: Props) {
             {n}
           </span>
           <span className="mt-0.5 text-[9px] font-bold uppercase tracking-wide text-rescued/80 sm:text-[10px]">
-            Rescatados
+            <span className="sm:hidden">Rescat.</span>
+            <span className="hidden sm:inline">Rescatados</span>
           </span>
         </Link>
         <Link
@@ -38,7 +39,8 @@ export function RescuedHopeBanner({ rescued, lost, seen, adopt }: Props) {
             {lostN}
           </span>
           <span className="mt-0.5 text-[9px] font-bold uppercase tracking-wide text-lost/80 sm:text-[10px]">
-            Perdidos
+            <span className="sm:hidden">Perd.</span>
+            <span className="hidden sm:inline">Perdidos</span>
           </span>
         </Link>
         <Link
@@ -60,7 +62,8 @@ export function RescuedHopeBanner({ rescued, lost, seen, adopt }: Props) {
             {adoptN}
           </span>
           <span className="mt-0.5 text-[9px] font-bold uppercase tracking-wide text-adopt/80 sm:text-[10px]">
-            Adopción
+            <span className="sm:hidden">Adopt.</span>
+            <span className="hidden sm:inline">Adopción</span>
           </span>
         </Link>
       </div>
