@@ -24,6 +24,8 @@ export function buildWhatsAppUrl(report: PetReport): string {
     text = `${hi}, vi tu reporte en la app sobre tu mascota perdida en ${report.neighborhood}, ${report.city}. Creo que la vi/tengo información.`;
   } else if (report.report_type === "encontrado") {
     text = `${hi}, vi que reportaste una mascota encontrada en ${report.neighborhood}, ${report.city}. Creo que es la mía.`;
+  } else if (report.report_type === "adopcion") {
+    text = `${hi}, vi tu publicación de adopción en ${report.neighborhood}, ${report.city}. Me interesa darle un hogar a este peludito.`;
   } else {
     text = `${hi}, vi tu reporte de mascota rescatada en ${report.neighborhood}, ${report.city}.`;
   }
@@ -36,5 +38,6 @@ export function whatsappButtonLabel(
 ): string {
   if (reportType === "perdido") return "¡Lo vi / Lo tengo! (WhatsApp)";
   if (reportType === "encontrado") return "¡Es mi mascota! (WhatsApp)";
+  if (reportType === "adopcion") return "Quiero adoptarlo (WhatsApp)";
   return "Contactar (WhatsApp)";
 }

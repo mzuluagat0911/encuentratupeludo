@@ -52,9 +52,22 @@ export function CloseCaseForm({ report }: Props) {
   return (
     <div className="space-y-4 rounded-3xl border border-line bg-white p-5">
       <p className="text-sm leading-relaxed text-muted">
-        Confirma solo si este peludo <strong className="text-foreground">ya se reunió</strong>{" "}
-        con su familia. Pasará de {report.report_type === "perdido" ? "Perdidos" : "Encontrados"} a{" "}
-        <strong className="text-rescued">Rescatados</strong>.
+        {report.report_type === "adopcion" ? (
+          <>
+            Confirma solo si este peludo{" "}
+            <strong className="text-foreground">ya encontró un hogar</strong>.
+            Pasará de Adopción a{" "}
+            <strong className="text-rescued">Rescatados</strong>.
+          </>
+        ) : (
+          <>
+            Confirma solo si este peludo{" "}
+            <strong className="text-foreground">ya se reunió</strong> con su
+            familia. Pasará de{" "}
+            {report.report_type === "perdido" ? "Perdidos" : "Encontrados"} a{" "}
+            <strong className="text-rescued">Rescatados</strong>.
+          </>
+        )}
       </p>
 
       {error ? (
@@ -77,7 +90,9 @@ export function CloseCaseForm({ report }: Props) {
         ) : (
           <>
             <CheckCircle2 className="h-5 w-5" aria-hidden />
-            Sí, ya está con su familia
+            {report.report_type === "adopcion"
+              ? "Sí, ya encontró un hogar"
+              : "Sí, ya está con su familia"}
           </>
         )}
       </button>

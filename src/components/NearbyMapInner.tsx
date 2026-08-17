@@ -35,6 +35,7 @@ function safePhotoSrc(url: string | null | undefined): string | null {
 function pinColor(type: PetReport["report_type"]): string {
   if (type === "perdido") return "#c2410c";
   if (type === "encontrado") return "#047857";
+  if (type === "adopcion") return "#7c3aed";
   return "#1d4ed8";
 }
 

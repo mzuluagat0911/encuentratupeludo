@@ -11,6 +11,7 @@ export const dynamic = "force-dynamic";
 function parseTipo(raw: string | null): MetaCatalogFilter["reportType"] {
   if (!raw || raw === "vistos" || raw === "encontrado") return "vistos";
   if (raw === "perdido") return "perdido";
+  if (raw === "adopcion") return "adopcion";
   if (raw === "todos") return undefined;
   return "vistos";
 }
@@ -26,9 +27,11 @@ export async function GET(request: Request) {
     const name =
       reportType === "perdido"
         ? "ubicatupeludo-perdidos.csv"
-        : reportType === undefined
-          ? "ubicatupeludo-todos.csv"
-          : "ubicatupeludo-vistos.csv";
+        : reportType === "adopcion"
+          ? "ubicatupeludo-adopcion.csv"
+          : reportType === undefined
+            ? "ubicatupeludo-todos.csv"
+            : "ubicatupeludo-vistos.csv";
 
     return new NextResponse(csv, {
       status: 200,

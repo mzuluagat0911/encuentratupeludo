@@ -37,12 +37,17 @@ export type FeedCounts = {
   rescatado: number;
   perdido: number;
   encontrado: number;
+  adopcion: number;
 };
 
 async function countByType(
-  reportType: "rescatado" | "perdido" | "encontrado",
+  reportType: "rescatado" | "perdido" | "encontrado" | "adopcion",
 ): Promise<number> {
-  if (!isSupabaseConfigured()) return 0;
+  if (!isSupabaseConfigured()) {
+    const { listReports } = await import("@/lib/reports");
+    const rows = await listReports({ reportType });
+    return rows.length;
+  }
   const supabase = createServerClient();
   if (!supabase) return 0;
 
@@ -61,12 +66,13 @@ async function countByType(
 }
 
 export async function countFeedReports(): Promise<FeedCounts> {
-  const [rescatado, perdido, encontrado] = await Promise.all([
+  const [rescatado, perdido, encontrado, adopcion] = await Promise.all([
     countByType("rescatado"),
     countByType("perdido"),
     countByType("encontrado"),
+    countByType("adopcion"),
   ]);
-  return { rescatado, perdido, encontrado };
+  return { rescatado, perdido, encontrado, adopcion };
 }
 
 export async function countRescuedReports(): Promise<number> {

@@ -78,6 +78,19 @@ const SEED_REPORTS: PetReport[] = [
     description: "Perro mediano café, parece mestizo, asustado pero sin heridas visibles.",
     created_at: new Date(Date.now() - 1000 * 60 * 60 * 20).toISOString(),
   },
+  {
+    id: "seed-5",
+    report_type: "adopcion",
+    pet_type: "gato",
+    photo_url: null,
+    city: "Manizales",
+    neighborhood: "Palermo",
+    phone: "3005557788",
+    responsible_name: "Camila Torres",
+    description:
+      "Gata de 1 año, esterilizada y vacunada. Busca un hogar tranquilo. Entrega responsable.",
+    created_at: new Date(Date.now() - 1000 * 60 * 60 * 5).toISOString(),
+  },
 ];
 
 async function ensureLocalStore(): Promise<PetReport[]> {

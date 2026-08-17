@@ -22,12 +22,12 @@ export const metadata: Metadata = {
   metadataBase: new URL(getSiteUrl()),
   title: "Ubica tu Peludo | Reúne mascotas tras un sismo",
   description:
-    "Plataforma de emergencia en Colombia para reportar y encontrar mascotas perdidas o vistas en la calle. Sin registro.",
+    "Plataforma de emergencia en Colombia para reportar mascotas perdidas, vistas o en adopción. Sin registro.",
   applicationName: "Ubica tu Peludo",
   openGraph: {
     title: "Ubica tu Peludo",
     description:
-      "Ayuda a reunir familias con sus mascotas después de un sismo. Publica o busca sin crear cuenta.",
+    "Ayuda a reunir familias con sus mascotas después de un sismo. Publica perdidos, vistos o peluditos en adopción, sin crear cuenta.",
     locale: "es_CO",
     type: "website",
     siteName: "Ubica tu Peludo",

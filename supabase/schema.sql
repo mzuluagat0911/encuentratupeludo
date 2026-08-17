@@ -4,7 +4,7 @@
 -- 1. Tabla de reportes
 create table if not exists public.pet_reports (
   id uuid primary key default gen_random_uuid(),
-  report_type text not null check (report_type in ('perdido', 'encontrado', 'rescatado')),
+  report_type text not null check (report_type in ('perdido', 'encontrado', 'rescatado', 'adopcion')),
   pet_type text not null check (pet_type in ('perro', 'gato')),
   photo_url text,
   city text not null,

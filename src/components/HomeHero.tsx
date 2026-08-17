@@ -22,7 +22,8 @@ export function HomeHero() {
         </h1>
         <p className="animate-fade-up-delay mt-3 max-w-xl text-base leading-relaxed text-muted sm:text-lg">
           Plataforma de emergencia en Colombia para reunir mascotas tras un
-          sismo. Sin cuentas: publica o busca en segundos.
+          sismo. Sin cuentas: publica o busca en segundos. También puedes
+          registrar peluditos en adopción.
         </p>
         <div className="animate-fade-up-delay mt-6 flex flex-col gap-3 sm:flex-row">
           <Link

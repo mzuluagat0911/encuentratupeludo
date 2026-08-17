@@ -13,6 +13,7 @@ import {
   Cat,
   CheckCircle2,
   Dog,
+  Heart,
   HeartHandshake,
   Loader2,
   MapPinned,
@@ -32,13 +33,19 @@ import type { PetReport, PetType, ReportType } from "@/lib/types";
 
 const initialState: PublishState = { ok: false };
 
-export function ReportForm() {
+type Props = {
+  initialType?: ReportType | null;
+};
+
+export function ReportForm({ initialType = null }: Props) {
   const router = useRouter();
   const [state, formAction, pending] = useActionState(
     publishReport,
     initialState,
   );
-  const [reportType, setReportType] = useState<ReportType | null>(null);
+  const [reportType, setReportType] = useState<ReportType | null>(
+    initialType ?? null,
+  );
   const [petType, setPetType] = useState<PetType | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [hasPhoto, setHasPhoto] = useState(false);
@@ -145,8 +152,8 @@ export function ReportForm() {
       return;
     }
 
-    // Rescatados: el action nativo manda la foto bien (sin FormData de cliente)
-    if (reportType === "rescatado") return;
+    // Rescatados y adopción: el action nativo manda la foto bien (sin FormData de cliente)
+    if (reportType === "rescatado" || reportType === "adopcion") return;
 
     e.preventDefault();
     const form = e.currentTarget;
@@ -266,6 +273,23 @@ export function ReportForm() {
             </span>
             <span className="mt-1 block text-sm text-muted">
               Tengo un animalito o lo vi en la calle
+            </span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setReportType("adopcion")}
+            className={`tap-target rounded-3xl border-2 px-4 py-4 text-left transition ${
+              reportType === "adopcion"
+                ? "border-adopt bg-adopt-soft"
+                : "border-line bg-white hover:border-adopt/40"
+            }`}
+          >
+            <span className="flex items-center gap-2 text-base font-bold text-adopt">
+              <Heart className="h-5 w-5" aria-hidden />
+              Peludito para adoptar
+            </span>
+            <span className="mt-1 block text-sm text-muted">
+              Busco un hogar responsable para este animalito
             </span>
           </button>
           <button
@@ -473,7 +497,11 @@ export function ReportForm() {
           <textarea
             name="description"
             rows={3}
-            placeholder="Color, collar, estado físico, nombre…"
+            placeholder={
+              reportType === "adopcion"
+                ? "Edad, tamaño, si está vacunado/esterilizado, carácter, requisitos de adopción…"
+                : "Color, collar, estado físico, nombre…"
+            }
             className="w-full rounded-2xl border border-line bg-white px-4 py-3.5 text-base outline-none ring-primary focus:ring-2"
           />
         </label>
@@ -515,7 +543,7 @@ export function ReportForm() {
             <Loader2 className="h-5 w-5 animate-spin" aria-hidden />
             Preparando foto…
           </>
-        ) : reportType === "rescatado" ? (
+        ) : reportType === "rescatado" || reportType === "adopcion" ? (
           "Publicar reporte"
         ) : (
           "Revisar y publicar"

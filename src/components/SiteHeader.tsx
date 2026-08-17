@@ -6,13 +6,15 @@ type Props = {
   rescued?: number;
   lost?: number;
   seen?: number;
+  adopt?: number;
 };
 
-export function SiteHeader({ rescued, lost, seen }: Props = {}) {
+export function SiteHeader({ rescued, lost, seen, adopt }: Props = {}) {
   const showStats =
     typeof rescued === "number" &&
     typeof lost === "number" &&
-    typeof seen === "number";
+    typeof seen === "number" &&
+    typeof adopt === "number";
 
   return (
     <header className="sticky top-0 z-40 border-b border-line/70 bg-[#f7fbf8]/90 backdrop-blur-md">
@@ -50,7 +52,12 @@ export function SiteHeader({ rescued, lost, seen }: Props = {}) {
         </div>
       </div>
       {showStats ? (
-        <RescuedHopeBanner rescued={rescued} lost={lost} seen={seen} />
+        <RescuedHopeBanner
+          rescued={rescued ?? 0}
+          lost={lost ?? 0}
+          seen={seen ?? 0}
+          adopt={adopt ?? 0}
+        />
       ) : null}
     </header>
   );
