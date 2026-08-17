@@ -77,7 +77,11 @@ export function reportsToMetaCatalogCsv(reports: PetReport[]): string {
     );
     const description = reportShareDescription(report) || reportShareTitle(report);
     const productType =
-      report.report_type === "encontrado" ? "Visto" : "Perdido";
+      report.report_type === "encontrado"
+        ? "Visto"
+        : report.report_type === "adopcion"
+          ? "Adopción"
+          : "Perdido";
 
     const row = [
       report.id,

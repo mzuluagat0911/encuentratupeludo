@@ -42,11 +42,15 @@ export default async function CerrarCasoPage({ params }: PageParams) {
         </Link>
 
         <h1 className="font-[family-name:var(--font-display)] text-3xl font-semibold tracking-tight text-foreground">
-          ¿Ya se reunieron?
+          {report.report_type === "adopcion"
+            ? "¿Ya encontró un hogar?"
+            : "¿Ya se reunieron?"}
         </h1>
         <p className="mt-2 text-sm leading-relaxed text-muted">
           Este link es privado para quien publicó el reporte. Úsalo solo cuando
-          el animalito ya esté con su familia.
+          {report.report_type === "adopcion"
+            ? " el animalito ya tenga familia."
+            : " el animalito ya esté con su familia."}
         </p>
 
         <article className="mt-6 overflow-hidden rounded-3xl border border-line bg-card">

@@ -1,4 +1,21 @@
-export type ReportType = "perdido" | "encontrado" | "rescatado";
+export type ReportType = "perdido" | "encontrado" | "rescatado" | "adopcion";
+
+export const REPORT_TYPES: readonly ReportType[] = [
+  "perdido",
+  "encontrado",
+  "rescatado",
+  "adopcion",
+] as const;
+
+export function isReportType(value: unknown): value is ReportType {
+  return (
+    value === "perdido" ||
+    value === "encontrado" ||
+    value === "rescatado" ||
+    value === "adopcion"
+  );
+}
+
 export type PetType = "perro" | "gato";
 
 export type PetReport = {

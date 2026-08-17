@@ -13,6 +13,7 @@ import type { PetReport, ReportType } from "@/lib/types";
 import { formatRelativeDate } from "@/lib/format";
 import { buildWhatsAppUrl, whatsappButtonLabel } from "@/lib/whatsapp";
 import { reportPhotoSrc } from "@/lib/photoDisplay";
+import { reportTypeBadgeClass, reportTypeLabel } from "@/lib/reportCopy";
 
 type Props = {
   candidates: PetReport[];
@@ -23,18 +24,6 @@ type Props = {
   onBack: () => void;
   error?: string;
 };
-
-function typeLabel(type: PetReport["report_type"]): string {
-  if (type === "perdido") return "Perdido";
-  if (type === "encontrado") return "Encontrado";
-  return "Rescatado";
-}
-
-function typeBadgeClass(type: PetReport["report_type"]): string {
-  if (type === "perdido") return "bg-lost";
-  if (type === "encontrado") return "bg-found";
-  return "bg-rescued";
-}
 
 function introCopy(yourType: ReportType, count: number): string {
   const n = count === 1 ? "1 reporte" : `${count} reportes`;
@@ -93,7 +82,7 @@ export function MatchReview({
                     />
                     <Image
                       src={photo}
-                      alt={`${report.pet_type} ${typeLabel(report.report_type).toLowerCase()} en ${report.city}`}
+                      alt={`${report.pet_type} ${reportTypeLabel(report.report_type).toLowerCase()} en ${report.city}`}
                       fill
                       className="object-contain"
                       sizes="(max-width: 768px) 100vw, 480px"
@@ -109,9 +98,9 @@ export function MatchReview({
                 )}
                 <div className="absolute left-3 top-3 flex flex-wrap gap-2">
                   <span
-                    className={`rounded-xl px-2.5 py-1 text-xs font-bold uppercase tracking-wide text-white ${typeBadgeClass(report.report_type)}`}
+                    className={`rounded-xl px-2.5 py-1 text-xs font-bold uppercase tracking-wide text-white ${reportTypeBadgeClass(report.report_type)}`}
                   >
-                    {typeLabel(report.report_type)}
+                    {reportTypeLabel(report.report_type)}
                   </span>
                   <span className="inline-flex items-center gap-1 rounded-xl bg-white/95 px-2.5 py-1 text-xs font-semibold capitalize text-foreground">
                     <PetIcon className="h-3.5 w-3.5" aria-hidden />

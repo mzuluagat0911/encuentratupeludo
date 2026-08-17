@@ -4,14 +4,21 @@ import { SiteHeader } from "@/components/SiteHeader";
 import { ReportForm } from "@/components/ReportForm";
 import { LocalModeBanner } from "@/components/LocalModeBanner";
 import { usingLocalStore } from "@/lib/reports";
+import { isReportType } from "@/lib/types";
 
 export const metadata = {
   title: "Publicar reporte | Ubica tu Peludo",
   description:
-    "Reporta una mascota perdida o encontrada en Colombia. Sin registro.",
+    "Reporta una mascota perdida, vista, rescatada o en adopción en Colombia. Sin registro.",
 };
 
-export default function PublicarPage() {
+export default async function PublicarPage({
+  searchParams,
+}: PageProps<"/publicar">) {
+  const params = await searchParams;
+  const rawTipo = typeof params.tipo === "string" ? params.tipo : undefined;
+  const initialType = isReportType(rawTipo) ? rawTipo : null;
+
   return (
     <>
       <SiteHeader />
@@ -29,12 +36,12 @@ export default function PublicarPage() {
         </h1>
         <p className="mt-2 text-sm leading-relaxed text-muted">
           Elige el tipo de situación y completa lo esencial. Tu número solo se
-          usa para WhatsApp.
+          usa para WhatsApp. También puedes publicar un peludito en adopción.
         </p>
 
         <div className="mt-6">
           {usingLocalStore() ? <LocalModeBanner /> : null}
-          <ReportForm />
+          <ReportForm initialType={initialType} />
         </div>
       </main>
     </>

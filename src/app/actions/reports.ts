@@ -6,6 +6,7 @@ import { createServerClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/client";
 import { normalizeColombianPhone } from "@/lib/whatsapp";
 import type { PetReport, PetType, ReportType } from "@/lib/types";
+import { isReportType } from "@/lib/types";
 import { COLOMBIA_CITIES } from "@/lib/cities";
 import { checkPublishContent } from "@/lib/contentFilter";
 import { looksLikeRescuedDescription } from "@/lib/rescued";
@@ -38,7 +39,7 @@ export type PreviewMatchesState = {
 function isValidReportType(
   v: FormDataEntryValue | null,
 ): v is ReportType {
-  return v === "perdido" || v === "encontrado" || v === "rescatado";
+  return isReportType(v);
 }
 
 function isValidPetType(v: FormDataEntryValue | null): v is PetType {
@@ -236,9 +237,11 @@ export async function publishReport(
     }
 
     const finalType: ReportType =
-      reportType === "rescatado" || looksLikeRescuedDescription(description)
-        ? "rescatado"
-        : reportType;
+      reportType === "adopcion"
+        ? "adopcion"
+        : reportType === "rescatado" || looksLikeRescuedDescription(description)
+          ? "rescatado"
+          : reportType;
 
     const fallback = estimateReportPoint({ city, neighborhood }).point;
     let coords = fallback;
@@ -274,9 +277,11 @@ export async function publishReport(
       message:
         report.report_type === "rescatado"
           ? "¡Gracias por compartir una historia de esperanza!"
-          : usingLocalStore()
-            ? "¡Publicado! (modo local — configura Supabase para producción)"
-            : "¡Reporte publicado!",
+          : report.report_type === "adopcion"
+            ? "¡Publicado! Ya aparece en En adopción."
+            : usingLocalStore()
+              ? "¡Publicado! (modo local — configura Supabase para producción)"
+              : "¡Reporte publicado!",
     };
   } catch (err) {
     const message =

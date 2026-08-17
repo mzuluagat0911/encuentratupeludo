@@ -21,7 +21,12 @@ import {
 import { nearSearchString } from "@/lib/nearNav";
 
 function parseTipo(value?: string): ReportType | "todas" {
-  if (value === "perdido" || value === "encontrado" || value === "rescatado") {
+  if (
+    value === "perdido" ||
+    value === "encontrado" ||
+    value === "rescatado" ||
+    value === "adopcion"
+  ) {
     return value;
   }
   return "todas";
@@ -84,6 +89,7 @@ export default async function HomePage({ searchParams }: PageProps<"/">) {
         rescued={counts.rescatado}
         lost={counts.perdido}
         seen={counts.encontrado}
+        adopt={counts.adopcion}
       />
       <main className="flex-1 pb-24">
         {nearMe ? null : <HomeHero />}

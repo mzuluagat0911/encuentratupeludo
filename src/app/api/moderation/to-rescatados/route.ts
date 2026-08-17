@@ -47,6 +47,7 @@ export async function POST() {
       .eq("city", t.city)
       .ilike("neighborhood", `%${t.neighborhood}%`)
       .neq("report_type", "rescatado")
+      .neq("report_type", "adopcion")
       .select("id, report_type, city, neighborhood, description, pet_type");
     if (error) {
       return NextResponse.json({ ok: false, message: error.message, step: "targets" }, { status: 500 });
@@ -58,6 +59,7 @@ export async function POST() {
     .from("pet_reports")
     .select("id, report_type, city, neighborhood, description, pet_type")
     .neq("report_type", "rescatado")
+    .neq("report_type", "adopcion")
     .not("description", "is", null);
 
   if (descErr) {
@@ -137,6 +139,7 @@ export async function POST() {
     .update({ report_type: "rescatado" })
     .in("id", forceRescueIds)
     .neq("report_type", "rescatado")
+    .neq("report_type", "adopcion")
     .select("id, report_type, city, neighborhood, description, pet_type");
   if (forced?.length) moved.push(...(forced as Row[]));
 

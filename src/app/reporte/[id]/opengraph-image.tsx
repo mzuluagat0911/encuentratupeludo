@@ -1,7 +1,7 @@
 import { ImageResponse } from "next/og";
 import { getReportById } from "@/lib/reports";
 import { reportPhotoAbsoluteUrl } from "@/lib/photoDisplay";
-import { reportTypeLabel } from "@/lib/reportCopy";
+import { reportTypeLabel, reportTypeBadgeColor } from "@/lib/reportCopy";
 
 export const alt = "Ubica tu Peludo";
 export const size = {
@@ -37,12 +37,9 @@ export default async function Image({ params }: Props) {
     : "Ubica tu Peludo";
   const place = report ? `${report.neighborhood} · ${report.city}` : "Colombia";
   const badge = report ? reportTypeLabel(report.report_type) : "Reporte";
-  const badgeColor =
-    report?.report_type === "perdido"
-      ? "#c2410c"
-      : report?.report_type === "encontrado"
-        ? "#0f766e"
-        : "#1d4ed8";
+  const badgeColor = report
+    ? reportTypeBadgeColor(report.report_type)
+    : "#1d4ed8";
 
   const photoUrl = reportPhotoAbsoluteUrl(report ?? { id: id, photo_url: null });
   const photo =

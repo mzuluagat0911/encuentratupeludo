@@ -25,6 +25,7 @@ export function PublishSuccess({ reportId, reportType, message }: Props) {
   const [closeUrl, setCloseUrl] = useState(`/cerrar/${reportId}`);
   const [shareUrl, setShareUrl] = useState(reportPath(reportId));
   const isRescued = reportType === "rescatado";
+  const isAdopt = reportType === "adopcion";
   const ogHref = `${reportPath(reportId)}/opengraph-image`;
 
   useEffect(() => {
@@ -53,7 +54,9 @@ export function PublishSuccess({ reportId, reportType, message }: Props) {
       if (typeof navigator.share === "function") {
         await navigator.share({
           title: "Ubica tu Peludo",
-          text: "Ayuda a encontrar a este peludo",
+          text: isAdopt
+            ? "Hay un peludito en adopción"
+            : "Ayuda a encontrar a este peludo",
           url: shareUrl,
         });
         return;
@@ -164,7 +167,7 @@ export function PublishSuccess({ reportId, reportType, message }: Props) {
           Guarda este link (privado)
         </p>
         <p className="mt-2 text-sm leading-relaxed text-muted">
-          Cuando tu peludo se reúna con su familia, ábrelo y márcalo como{" "}
+          Cuando {isAdopt ? "encuentre un hogar" : "tu peludo se reúna con su familia"}, ábrelo y márcalo como{" "}
           <strong className="text-foreground">rescatado</strong>. Solo quien
           tenga el link puede cerrar el caso.
         </p>
@@ -182,10 +185,10 @@ export function PublishSuccess({ reportId, reportType, message }: Props) {
       </div>
 
       <Link
-        href="/"
+        href={isAdopt ? "/?tipo=adopcion" : "/"}
         className="tap-target flex w-full items-center justify-center rounded-2xl border border-line bg-white px-4 py-3 text-sm font-bold text-foreground hover:bg-white/80"
       >
-        Ir al feed
+        {isAdopt ? "Ver en adopción" : "Ir al feed"}
       </Link>
     </div>
   );

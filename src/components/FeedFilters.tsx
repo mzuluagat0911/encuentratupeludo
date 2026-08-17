@@ -10,12 +10,13 @@ import { NearMeButton } from "@/components/NearMeButton";
 const TABS: {
   value: string;
   label: string;
-  tone?: "lost" | "found" | "rescued";
+  tone?: "lost" | "found" | "rescued" | "adopt";
 }[] = [
   { value: "todas", label: "Todas" },
   { value: "perdido", label: "Perdidos", tone: "lost" },
   { value: "encontrado", label: "Encontrados / Vistos", tone: "found" },
   { value: "rescatado", label: "Rescatados", tone: "rescued" },
+  { value: "adopcion", label: "En adopción", tone: "adopt" },
 ];
 
 const PET_OPTIONS = [
@@ -105,7 +106,9 @@ export function FeedFilters() {
                       ? "bg-found text-white"
                       : tab.tone === "rescued"
                         ? "bg-rescued text-white"
-                        : "bg-foreground text-white"
+                        : tab.tone === "adopt"
+                          ? "bg-adopt text-white"
+                          : "bg-foreground text-white"
                   : "border border-line bg-white/80 text-foreground hover:bg-white"
               }`}
             >

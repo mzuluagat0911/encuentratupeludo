@@ -11,7 +11,7 @@ type Body = {
   neighborhood?: string;
   descriptionContains?: string;
   note?: string;
-  report_type?: "rescatado" | "perdido" | "encontrado";
+  report_type?: "rescatado" | "perdido" | "encontrado" | "adopcion";
 };
 
 /**
