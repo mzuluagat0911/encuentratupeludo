@@ -10,13 +10,19 @@ import { NearMeButton } from "@/components/NearMeButton";
 const TABS: {
   value: string;
   label: string;
+  shortLabel?: string;
   tone?: "lost" | "found" | "rescued" | "adopt";
 }[] = [
   { value: "todas", label: "Todas" },
   { value: "perdido", label: "Perdidos", tone: "lost" },
-  { value: "encontrado", label: "Encontrados / Vistos", tone: "found" },
+  {
+    value: "encontrado",
+    label: "Encontrados / Vistos",
+    shortLabel: "Vistos",
+    tone: "found",
+  },
   { value: "rescatado", label: "Rescatados", tone: "rescued" },
-  { value: "adopcion", label: "En adopción", tone: "adopt" },
+  { value: "adopcion", label: "En adopción", shortLabel: "Adopción", tone: "adopt" },
 ];
 
 const PET_OPTIONS = [
@@ -37,11 +43,19 @@ export function FeedFilters() {
   const nombreParam = searchParams.get("nombre") || "";
   const [nombre, setNombre] = useState(nombreParam);
   const searchParamsRef = useRef(searchParams);
+  const tablistRef = useRef<HTMLDivElement>(null);
   searchParamsRef.current = searchParams;
 
   useEffect(() => {
     setNombre(nombreParam);
   }, [nombreParam]);
+
+  useEffect(() => {
+    const active = tablistRef.current?.querySelector<HTMLElement>(
+      '[aria-selected="true"]',
+    );
+    active?.scrollIntoView({ inline: "center", block: "nearest" });
+  }, [tipo]);
 
   function pushParams(params: URLSearchParams) {
     const qs = params.toString();
@@ -78,10 +92,15 @@ export function FeedFilters() {
       <NearMeButton />
 
       <div
+        ref={tablistRef}
         role="tablist"
         aria-label="Tipo de reporte"
-        className="flex gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        className="relative -mx-1 flex snap-x snap-mandatory gap-2 overflow-x-auto px-1 pb-1 pr-6 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-y-0 right-0 z-10 w-8 bg-gradient-to-l from-[#f7fbf8] to-transparent"
+        />
         {TABS.filter((tab) => !(nearMe && tab.value === "encontrado")).map((tab) => {
           const active = tipo === tab.value;
           const hrefParams = new URLSearchParams(searchParams.toString());
@@ -98,7 +117,7 @@ export function FeedFilters() {
               scroll={false}
               role="tab"
               aria-selected={active}
-              className={`tap-target inline-flex shrink-0 items-center justify-center rounded-2xl px-4 py-2.5 text-sm font-semibold transition ${
+              className={`tap-target inline-flex shrink-0 snap-start items-center justify-center rounded-2xl px-4 py-2.5 text-sm font-semibold transition ${
                 active
                   ? tab.tone === "lost"
                     ? "bg-lost text-white"
@@ -112,7 +131,14 @@ export function FeedFilters() {
                   : "border border-line bg-white/80 text-foreground hover:bg-white"
               }`}
             >
-              {tab.label}
+              {tab.shortLabel ? (
+                <>
+                  <span className="sm:hidden">{tab.shortLabel}</span>
+                  <span className="hidden sm:inline">{tab.label}</span>
+                </>
+              ) : (
+                tab.label
+              )}
             </Link>
           );
         })}
